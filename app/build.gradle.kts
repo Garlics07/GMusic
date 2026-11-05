@@ -15,8 +15,8 @@ android {
         applicationId = "com.gmusic.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 26
-        versionName = "2.6.0"
+        versionCode = 27
+        versionName = "2.7.0"
 
         vectorDrawables {
             useSupportLibrary = true
@@ -69,6 +69,7 @@ dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs.nio)
 
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

@@ -633,16 +633,42 @@ private fun HomeShelfSection(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp)) {
-            if (!section.subtitle.isNullOrBlank()) {
+            val localizedSubtitle = when (section.subtitle?.trim()) {
+                "FATTO PER TE", "MADE FOR YOU", "CONÇU POUR VOUS", "HECHO PARA TI" -> stringResource(R.string.home_made_for_you_label)
+                "ASCOLTO OFFLINE" -> stringResource(R.string.library_downloads)
+                else -> section.subtitle
+            }
+            if (!localizedSubtitle.isNullOrBlank()) {
                 Text(
-                    text = section.subtitle,
+                    text = localizedSubtitle,
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(2.dp))
             }
+            val localizedTitle = when (section.id) {
+                "shelf_made_for_you" -> stringResource(R.string.home_your_mixes)
+                "shelf_recent_carousel", "offline_recent" -> stringResource(R.string.home_recent_plays)
+                "shelf_recommended" -> stringResource(R.string.home_recommended)
+                "shelf_favorite_artists" -> stringResource(R.string.home_favorite_artists)
+                "shelf_playlists" -> stringResource(R.string.home_your_playlists)
+                "shelf_new_releases" -> stringResource(R.string.home_new_releases)
+                "offline_downloads" -> stringResource(R.string.library_downloads)
+                "offline_liked" -> stringResource(R.string.library_liked_songs)
+                else -> when (section.title.trim()) {
+                    "I tuoi mix", "Your Mixes", "Vos mix", "Tus mixes" -> stringResource(R.string.home_your_mixes)
+                    "Riproduzioni recenti", "Recent Plays", "Écoutés récemment", "Reproducciones recientes" -> stringResource(R.string.home_recent_plays)
+                    "Consigliati per te", "Recommended for You", "Recommandé pour vous", "Recomendado para ti" -> stringResource(R.string.home_recommended)
+                    "I tuoi artisti preferiti", "Your Favorite Artists", "Vos artistes préférés", "Tus artistas favoritos" -> stringResource(R.string.home_favorite_artists)
+                    "Le tue playlist", "Your Playlists", "Vos playlists", "Tus listas" -> stringResource(R.string.home_your_playlists)
+                    "Nuove uscite", "New Releases", "Nouveautés", "Novedades" -> stringResource(R.string.home_new_releases)
+                    "Canzoni preferite", "Liked Songs", "Titres likés", "Canciones favoritas" -> stringResource(R.string.library_liked_songs)
+                    "Scaricati", "Downloads", "Téléchargements", "Descargas" -> stringResource(R.string.library_downloads)
+                    else -> section.title
+                }
+            }
             Text(
-                text = section.title,
+                text = localizedTitle,
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold
@@ -701,8 +727,14 @@ private fun HomeShelfCard(
             overflow = TextOverflow.Ellipsis
         )
         Spacer(modifier = Modifier.height(2.dp))
+        val displayedSubtitle = when {
+            item.subtitle == "Artista" -> stringResource(R.string.filter_artists)
+            item.subtitle.startsWith("Playlist • ") -> "${stringResource(R.string.filter_playlists)} • ${item.subtitle.removePrefix("Playlist • ")}"
+            item.subtitle.startsWith("Album • ") -> "${stringResource(R.string.filter_albums)} • ${item.subtitle.removePrefix("Album • ")}"
+            else -> item.subtitle
+        }
         Text(
-            text = item.subtitle,
+            text = displayedSubtitle,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 2,

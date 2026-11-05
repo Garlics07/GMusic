@@ -70,6 +70,9 @@ class MusicRepository @Inject constructor(
     private val _accountAvatarUrl = MutableStateFlow<String?>(null)
     val accountAvatarUrl: StateFlow<String?> = _accountAvatarUrl.asStateFlow()
 
+    private val _accountName = MutableStateFlow<String?>(null)
+    val accountName: StateFlow<String?> = _accountName.asStateFlow()
+
     private val artistDiscographyCache = ConcurrentHashMap<String, List<Track>>()
 
     val isLoggedIn: StateFlow<Boolean> = authCredentialStore.isLoggedIn
@@ -85,6 +88,7 @@ class MusicRepository @Inject constructor(
                 } else {
                     _remotePlaylists.value = emptyList()
                     _accountAvatarUrl.value = null
+                    _accountName.value = null
                 }
             }
         }
@@ -115,19 +119,21 @@ class MusicRepository @Inject constructor(
         if (!authCredentialStore.hasValidCookie()) {
             _remotePlaylists.value = emptyList()
             _accountAvatarUrl.value = null
+            _accountName.value = null
             return@withContext
         }
         try {
             coroutineScope {
-                val avatarDeferred = async { innerTubeClient.fetchAccountAvatarUrl() }
+                val accountInfoDeferred = async { innerTubeClient.fetchAccountInfo() }
                 val likesDeferred = async { innerTubeClient.fetchAccountLikedTracks() }
                 val playlistsDeferred = async { innerTubeClient.fetchAccountPlaylists() }
                 val historyDeferred = async { innerTubeClient.fetchAccountHistoryTracks() }
                 val albumsDeferred = async { innerTubeClient.fetchAccountSavedAlbums() }
                 val artistsDeferred = async { innerTubeClient.fetchAccountSavedArtists() }
 
-                avatarDeferred.await()?.let { url ->
-                    if (url.isNotBlank()) _accountAvatarUrl.value = url
+                accountInfoDeferred.await().let { info ->
+                    if (!info.photoUrl.isNullOrBlank()) _accountAvatarUrl.value = info.photoUrl
+                    if (!info.name.isNullOrBlank()) _accountName.value = info.name
                 }
 
                 val remoteLikes = likesDeferred.await()

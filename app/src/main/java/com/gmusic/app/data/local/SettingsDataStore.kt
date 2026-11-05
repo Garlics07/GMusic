@@ -33,6 +33,7 @@ data class EqualizerPreset(
 }
 
 data class UserSettings(
+    val appLanguage: String = "",
     val adaptivePlayerColor: Boolean = false,
     val crossfadeSeconds: Int = 0,
     val highAudioQuality: Boolean = true,
@@ -72,6 +73,7 @@ class SettingsDataStore @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     private object Keys {
+        val APP_LANGUAGE = stringPreferencesKey("app_language")
         val ADAPTIVE_COLOR = booleanPreferencesKey("adaptive_player_color")
         val CROSSFADE_SEC = intPreferencesKey("crossfade_seconds")
         val HIGH_AUDIO_QUALITY = booleanPreferencesKey("high_audio_quality")
@@ -95,6 +97,7 @@ class SettingsDataStore @Inject constructor(
             ?: listOf(0, 0, 0, 0, 0)
 
         UserSettings(
+            appLanguage = prefs[Keys.APP_LANGUAGE] ?: "",
             adaptivePlayerColor = prefs[Keys.ADAPTIVE_COLOR] ?: false,
             crossfadeSeconds = prefs[Keys.CROSSFADE_SEC] ?: 0,
             highAudioQuality = prefs[Keys.HIGH_AUDIO_QUALITY] ?: true,
@@ -111,6 +114,10 @@ class SettingsDataStore @Inject constructor(
             lastQueueIndex = prefs[Keys.LAST_QUEUE_INDEX] ?: 0,
             lastPositionMs = prefs[Keys.LAST_POSITION_MS] ?: 0L
         )
+    }
+
+    suspend fun setAppLanguage(language: String) {
+        context.dataStore.edit { it[Keys.APP_LANGUAGE] = language }
     }
 
     suspend fun setAdaptivePlayerColor(enabled: Boolean) {

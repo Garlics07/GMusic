@@ -77,6 +77,7 @@ class InnerTubeClient @Inject constructor(
 
         for (profile in clientsToTry) {
             try {
+                val (clientHl, clientGl) = getClientLocale()
                 val payload = buildJsonObject {
                     put("videoId", videoId)
                     put("racyCheckOk", true)
@@ -85,8 +86,8 @@ class InnerTubeClient @Inject constructor(
                         putJsonObject("client") {
                             put("clientName", profile.clientName)
                             put("clientVersion", profile.clientVersion)
-                            put("hl", "it")
-                            put("gl", "IT")
+                            put("hl", clientHl)
+                            put("gl", clientGl)
                             if (profile.androidSdkVersion != null) {
                                 put("androidSdkVersion", profile.androidSdkVersion)
                             }
@@ -362,17 +363,28 @@ class InnerTubeClient @Inject constructor(
         artists.distinctBy { it.id }
     }
 
+data class UserAccountInfo(
+    val name: String?,
+    val photoUrl: String?
+)
+
     /**
-     * Recupera l'URL dell'immagine profilo dell'account Google/YouTube Music autenticato.
+     * Recupera nome e URL dell'immagine profilo dell'account Google/YouTube Music autenticato.
      */
-    suspend fun fetchAccountAvatarUrl(): String? = withContext(Dispatchers.IO) {
-        if (!authCredentialStore.hasValidCookie()) return@withContext null
+    suspend fun fetchAccountInfo(): UserAccountInfo = withContext(Dispatchers.IO) {
+        if (!authCredentialStore.hasValidCookie()) return@withContext UserAccountInfo(null, null)
         val payload = buildWebRemixPayload {}
         val root = executeWebRemixPost("account/account_menu", payload)
         if (root != null) {
-            findAccountPhotoUrl(root)?.let { return@withContext it }
+            val photo = findAccountPhotoUrl(root)
+            val name = findAccountName(root)
+            return@withContext UserAccountInfo(name, photo)
         }
-        null
+        UserAccountInfo(null, null)
+    }
+
+    suspend fun fetchAccountAvatarUrl(): String? = withContext(Dispatchers.IO) {
+        fetchAccountInfo().photoUrl
     }
 
     /**
@@ -831,15 +843,30 @@ class InnerTubeClient @Inject constructor(
         }
     }
 
+    private fun getClientLocale(): Pair<String, String> {
+        val locale = java.util.Locale.getDefault()
+        val hl = locale.language.ifBlank { "en" }
+        val gl = locale.country.ifBlank {
+            when (hl.lowercase()) {
+                "it" -> "IT"
+                "es" -> "ES"
+                "fr" -> "FR"
+                else -> "US"
+            }
+        }
+        return Pair(hl, gl)
+    }
+
     private fun buildWebRemixPayload(builder: kotlinx.serialization.json.JsonObjectBuilder.() -> Unit): JsonObject =
         buildJsonObject {
+            val (hl, gl) = getClientLocale()
             builder()
             putJsonObject("context") {
                 putJsonObject("client") {
                     put("clientName", "WEB_REMIX")
                     put("clientVersion", "1.20250120.01.00")
-                    put("hl", "it")
-                    put("gl", "IT")
+                    put("hl", hl)
+                    put("gl", gl)
                     authCredentialStore.getVisitorData()?.let { put("visitorData", it) }
                 }
             }
@@ -847,8 +874,9 @@ class InnerTubeClient @Inject constructor(
 
     private fun executeWebRemixPost(endpoint: String, payload: JsonObject): JsonObject? {
         return try {
+            val (hl, gl) = getClientLocale()
             val reqBuilder = Request.Builder()
-                .url("https://music.youtube.com/youtubei/v1/$endpoint?prettyPrint=false")
+                .url("https://music.youtube.com/youtubei/v1/$endpoint?prettyPrint=false&hl=$hl&gl=$gl")
                 .header("User-Agent", ClientProfile.WEB_REMIX_AUTH.userAgent)
                 .header("X-YouTube-Client-Name", ClientProfile.WEB_REMIX_AUTH.clientIdHeader)
                 .header("X-YouTube-Client-Version", ClientProfile.WEB_REMIX_AUTH.clientVersion)
@@ -1226,6 +1254,45 @@ class InnerTubeClient @Inject constructor(
             is JsonArray -> {
                 for (item in element) {
                     findAccountPhotoUrl(item)?.let { return it }
+                }
+            }
+            else -> Unit
+        }
+        return null
+    }
+
+    private fun extractSimpleOrRunsText(element: JsonElement): String? {
+        if (element is JsonPrimitive) return element.contentOrNull
+        if (element is JsonObject) {
+            element["simpleText"]?.jsonPrimitive?.contentOrNull?.let { return it }
+            val runs = element["runs"]?.jsonArray
+            if (runs != null && runs.isNotEmpty()) {
+                val sb = StringBuilder()
+                for (r in runs) {
+                    val t = r.jsonObject["text"]?.jsonPrimitive?.contentOrNull
+                    if (t != null) sb.append(t)
+                }
+                if (sb.isNotBlank()) return sb.toString()
+            }
+        }
+        return null
+    }
+
+    private fun findAccountName(element: JsonElement): String? {
+        when (element) {
+            is JsonObject -> {
+                val nameObj = element["accountName"] ?: element["name"]
+                if (nameObj != null) {
+                    val text = extractSimpleOrRunsText(nameObj)
+                    if (!text.isNullOrBlank()) return text
+                }
+                for ((_, child) in element) {
+                    findAccountName(child)?.let { return it }
+                }
+            }
+            is JsonArray -> {
+                for (item in element) {
+                    findAccountName(item)?.let { return it }
                 }
             }
             else -> Unit

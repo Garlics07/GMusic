@@ -1,6 +1,8 @@
 package com.gmusic.app.ui.settings
 
 import android.content.Context
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gmusic.app.data.auth.AuthCredentialStore
@@ -8,6 +10,7 @@ import com.gmusic.app.data.download.OfflineDownloadController
 import com.gmusic.app.data.local.EqualizerPreset
 import com.gmusic.app.data.local.SettingsDataStore
 import com.gmusic.app.data.local.UserSettings
+import com.gmusic.app.data.repository.MusicRepository
 import com.gmusic.app.playback.equalizer.AudioEffectsSupport
 import com.gmusic.app.playback.equalizer.GMusicEqualizerManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,8 +32,12 @@ class SettingsViewModel @Inject constructor(
     private val settingsDataStore: SettingsDataStore,
     private val equalizerManager: GMusicEqualizerManager,
     private val offlineDownloadController: OfflineDownloadController,
-    private val authCredentialStore: AuthCredentialStore
+    private val authCredentialStore: AuthCredentialStore,
+    private val musicRepository: MusicRepository
 ) : ViewModel() {
+
+    val accountAvatarUrl: StateFlow<String?> = musicRepository.accountAvatarUrl
+    val accountName: StateFlow<String?> = musicRepository.accountName
 
     val settings: StateFlow<UserSettings> = settingsDataStore.settingsFlow
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UserSettings())
@@ -71,6 +78,20 @@ class SettingsViewModel @Inject constructor(
     fun deleteAllDownloads() {
         offlineDownloadController.removeAllDownloads()
         refreshCacheSize()
+    }
+
+    fun setAppLanguage(tag: String) {
+        viewModelScope.launch {
+            settingsDataStore.setAppLanguage(tag)
+            val localeList = if (tag.isBlank()) {
+                LocaleListCompat.getEmptyLocaleList()
+            } else {
+                LocaleListCompat.forLanguageTags(tag)
+            }
+            withContext(Dispatchers.Main) {
+                AppCompatDelegate.setApplicationLocales(localeList)
+            }
+        }
     }
 
     fun setAdaptivePlayerColor(enabled: Boolean) {

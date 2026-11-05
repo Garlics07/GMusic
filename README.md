@@ -43,6 +43,10 @@
 * **📴 Ascolto Offline & Cache Intelligente**
   * Download brani con storage locale e persistenza metadati su database Room.
   * Modalità offline automatica in assenza di connessione di rete.
+* **🌐 Supporto Multilingua Nativo (IT, EN, FR, ES)**
+  * Supporto nativo per **Italiano**, **Inglese**, **Francese** e **Spagnolo**.
+  * Integrazione ufficiale **Per-App Language Android 13+** e rilevamento automatico della lingua di sistema del dispositivo.
+  * Backend InnerTube localizzato dinamicamente con parametri `hl` e `gl` coerenti con la lingua selezionata per feed, mix e classifiche.
 * **🎚️ Audio di Qualità Superiore & Equalizzatore**
   * Equalizzatore a 5 bande con preset dedicati (Rock, Pop, Jazz, Electronic, Vocal, ecc.).
   * Dissolvenza incrociata configurabile (**Crossfade** con curve logaritmiche e lineari).
@@ -120,6 +124,10 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 * **📴 Offline Caching & Downloads**
   * One-tap track downloading stored locally via Room database.
   * Resilient offline mode: playback continues gracefully without network connection.
+* **🌐 Native Multilingual Support (IT, EN, FR, ES)**
+  * Full native support for **Italian**, **English**, **French**, and **Spanish**.
+  * Official **Android 13+ Per-App Language** integration and automatic device system language detection.
+  * Dynamic InnerTube backend parameters (`hl`, `gl`) matching the selected app language for feeds, mixes, and charts.
 * **🎚️ Advanced Audio Controls & Equalizer**
   * 5-band equalizer with presets (Rock, Pop, Jazz, Electronic, Vocal, Bass Boost, etc.).
   * Configurable **Crossfade** with linear and logarithmic volume curves.

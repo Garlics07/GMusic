@@ -29,6 +29,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.annotation.StringRes
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.HighQuality
@@ -82,15 +84,25 @@ import kotlin.math.roundToInt
 private val BAND_LABELS = listOf("60 Hz", "230 Hz", "910 Hz", "3.6 kHz", "14 kHz")
 
 enum class SettingsSubSection(
-    val title: String,
-    val subtitle: String,
+    @StringRes val titleRes: Int,
     val icon: ImageVector
 ) {
-    THEME("Tema e colori", "Colore dinamico copertina, dissolvenza brani", Icons.Filled.Palette),
-    AUDIO_QUALITY("Qualità audio", "Opus 251 preferito, fallback AAC 140, istanze", Icons.Filled.HighQuality),
-    EQUALIZER("Equalizzatore", "Preset sonori, bass boost, virtualizzatore, 5 bande", Icons.Filled.Tune),
-    CACHE("Memoria e cache", "Dimensione cache audio, pulizia dati temporanei", Icons.Filled.Storage),
-    INFO("Informazioni app", "Versione 2.5.0, architettura, cronologia modifiche chat", Icons.Filled.Info)
+    THEME(R.string.settings_theme, Icons.Filled.Palette),
+    AUDIO_QUALITY(R.string.settings_audio_quality, Icons.Filled.HighQuality),
+    EQUALIZER(R.string.settings_equalizer, Icons.Filled.Tune),
+    CACHE(R.string.settings_cache, Icons.Filled.Storage),
+    INFO(R.string.settings_about, Icons.Filled.Info)
+}
+
+@Composable
+private fun getSubSectionSubtitle(sub: SettingsSubSection, settings: com.gmusic.app.data.local.UserSettings, cacheSizeMb: Long): String {
+    return when (sub) {
+        SettingsSubSection.THEME -> stringResource(R.string.settings_adaptive_player)
+        SettingsSubSection.AUDIO_QUALITY -> if (settings.highAudioQuality) stringResource(R.string.settings_quality_high) else stringResource(R.string.settings_quality_auto)
+        SettingsSubSection.EQUALIZER -> if (settings.eqEnabled) "ON (${settings.eqPresetId})" else "OFF"
+        SettingsSubSection.CACHE -> "${cacheSizeMb} MB"
+        SettingsSubSection.INFO -> "v2.7.0"
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -108,6 +120,9 @@ fun SettingsModalBottomSheet(
     val support by viewModel.effectsSupport.collectAsStateWithLifecycle()
     val cacheSizeMb by viewModel.cacheSizeMb.collectAsStateWithLifecycle()
     val isLoggedIn by viewModel.isLoggedIn.collectAsStateWithLifecycle()
+    val accountAvatarFromVm by viewModel.accountAvatarUrl.collectAsStateWithLifecycle()
+    val accountName by viewModel.accountName.collectAsStateWithLifecycle()
+    val effectiveAvatar = accountAvatarUrl ?: accountAvatarFromVm
 
     var currentSection by remember(initialSubSection) { mutableStateOf<SettingsSubSection?>(initialSubSection) }
     var showCookieDialog by remember { mutableStateOf(false) }
@@ -229,7 +244,7 @@ fun SettingsModalBottomSheet(
                                     )
                                 }
                                 Text(
-                                    text = currentSection!!.title,
+                                    text = stringResource(currentSection!!.titleRes),
                                     style = MaterialTheme.typography.titleLarge,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
@@ -290,104 +305,97 @@ fun SettingsModalBottomSheet(
                                 ),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Column(
+                                Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(48.dp)
-                                                .clip(CircleShape)
-                                                .background(
-                                                    if (isLoggedIn) MaterialTheme.colorScheme.primary
-                                                    else MaterialTheme.colorScheme.surfaceVariant
-                                                ),
-                                            contentAlignment = Alignment.Center
+                                    if (isLoggedIn) {
+                                        // Immagine profilo e Nome utente a sinistra
+                                        Row(
+                                            modifier = Modifier.weight(1f),
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            if (!accountAvatarUrl.isNullOrBlank()) {
-                                                AsyncImage(
-                                                    model = accountAvatarUrl,
-                                                    contentDescription = null,
-                                                    contentScale = ContentScale.Crop,
-                                                    modifier = Modifier
-                                                        .fillMaxSize()
-                                                        .clip(CircleShape)
-                                                )
-                                            } else {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(44.dp)
+                                                    .clip(CircleShape)
+                                                    .background(MaterialTheme.colorScheme.primary),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                if (!effectiveAvatar.isNullOrBlank()) {
+                                                    AsyncImage(
+                                                        model = effectiveAvatar,
+                                                        contentDescription = null,
+                                                        contentScale = ContentScale.Crop,
+                                                        modifier = Modifier
+                                                            .fillMaxSize()
+                                                            .clip(CircleShape)
+                                                    )
+                                                } else {
+                                                    Icon(
+                                                        imageVector = Icons.Filled.Person,
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                                        modifier = Modifier.size(26.dp)
+                                                    )
+                                                }
+                                            }
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Text(
+                                                text = accountName ?: "Account Google",
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.width(12.dp))
+
+                                        // Sign Out a destra
+                                        OutlinedButton(
+                                            onClick = viewModel::logout,
+                                            shape = RoundedCornerShape(12.dp)
+                                        ) {
+                                            Text(stringResource(R.string.settings_logout))
+                                        }
+                                    } else {
+                                        // Modalità Ospite / Login
+                                        Row(
+                                            modifier = Modifier.weight(1f),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(44.dp)
+                                                    .clip(CircleShape)
+                                                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                                                contentAlignment = Alignment.Center
+                                            ) {
                                                 Icon(
                                                     imageVector = Icons.Filled.Person,
                                                     contentDescription = null,
-                                                    tint = if (isLoggedIn) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    modifier = Modifier.size(28.dp)
+                                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    modifier = Modifier.size(26.dp)
                                                 )
                                             }
-                                        }
-                                        Spacer(modifier = Modifier.width(14.dp))
-                                        Column(modifier = Modifier.weight(1f)) {
+                                            Spacer(modifier = Modifier.width(12.dp))
                                             Text(
                                                 text = "Account Google",
                                                 style = MaterialTheme.typography.titleMedium,
                                                 fontWeight = FontWeight.Bold,
                                                 color = MaterialTheme.colorScheme.onSurface
                                             )
-                                            Text(
-                                                text = if (isLoggedIn) "Accesso GMusic • YouTube Music" else "Modalità Ospite (Locale)",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
                                         }
-                                        if (isLoggedIn) {
-                                            OutlinedButton(onClick = viewModel::logout) {
-                                                Text(stringResource(R.string.settings_logout))
-                                            }
-                                        } else {
-                                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                                FilledTonalButton(onClick = onOpenWebLogin) {
-                                                    Text(stringResource(R.string.settings_login))
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    if (isLoggedIn) {
-                                        val deviceName = "${android.os.Build.MANUFACTURER.replaceFirstChar { it.uppercase() }} ${android.os.Build.MODEL}"
-                                        Card(
-                                            shape = RoundedCornerShape(10.dp),
-                                            colors = CardDefaults.cardColors(
-                                                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f)
-                                            ),
-                                            modifier = Modifier.fillMaxWidth()
+                                        FilledTonalButton(
+                                            onClick = onOpenWebLogin,
+                                            shape = RoundedCornerShape(12.dp)
                                         ) {
-                                            Row(
-                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Filled.Info,
-                                                    contentDescription = null,
-                                                    tint = MaterialTheme.colorScheme.primary,
-                                                    modifier = Modifier.size(18.dp)
-                                                )
-                                                Column {
-                                                    Text(
-                                                        text = "Dispositivo: $deviceName (Android ${android.os.Build.VERSION.RELEASE})",
-                                                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                                                        color = MaterialTheme.colorScheme.onSurface
-                                                    )
-                                                    Text(
-                                                        text = "Accesso registrato su Google per GMusic tramite sessione web YouTube Music.",
-                                                        style = MaterialTheme.typography.bodySmall,
-                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                    )
-                                                }
-                                            }
+                                            Text(stringResource(R.string.settings_login))
                                         }
                                     }
                                 }
@@ -428,13 +436,13 @@ fun SettingsModalBottomSheet(
                                     Spacer(modifier = Modifier.width(14.dp))
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = sub.title,
+                                            text = stringResource(sub.titleRes),
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.SemiBold,
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Text(
-                                            text = sub.subtitle,
+                                            text = getSubSectionSubtitle(sub, settings, cacheSizeMb),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             maxLines = 1,
@@ -773,7 +781,7 @@ fun SettingsModalBottomSheet(
                                                 color = MaterialTheme.colorScheme.primary
                                             )
                                             Text(
-                                                text = "Versione 2.6.0 (Build 20261103)",
+                                                text = "Versione 2.7.0 (Build 20261105)",
                                                 style = MaterialTheme.typography.labelLarge,
                                                 fontWeight = FontWeight.Medium,
                                                 color = MaterialTheme.colorScheme.onSurface
@@ -803,7 +811,23 @@ fun SettingsModalBottomSheet(
                                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                                     ) {
                                         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                            Text(text = "v2.6.0 (Attuale)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                            Text(text = "v2.7.0 (Attuale)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                            Text(
+                                                text = "• Supporto multilingua nativo a 4 lingue (Italiano, English, Français, Español) basato su impostazioni di sistema\n• Traduzione dinamica automatica di tutte le sezioni e scaffali della Home\n• Tracciamento e sincronizzazione cronologia bidirezionale ufficiale YouTube Music\n• Header account Google snellito con immagine profilo e nome utente a sinistra, e disconnessione rapida a destra",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+
+                                item {
+                                    Card(
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                                    ) {
+                                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Text(text = "v2.6.0", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                                             Text(
                                                 text = "• Nuovo logo ufficiale su mobile, Android Auto, widget e interfaccia\n• Pulsante '+' compatto per creare nuove playlist (senza testo)\n• Sezione 'Canzoni scaricate' sotto Canzoni preferite con riproduzione e casuale\n• Playlist: rimozione frecce e drag, eliminazione brani nei 3 puntini, tasti Casuale e Scarica playlist\n• Modal impostazioni centrato su schermo con margini e limiti verticali",
                                                 style = MaterialTheme.typography.bodySmall,
