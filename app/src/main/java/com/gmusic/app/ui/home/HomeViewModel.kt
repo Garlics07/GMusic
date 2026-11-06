@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -40,13 +41,15 @@ data class HomeUiState(
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
     val currentPage: Int = 0,
+    val canLoadMore: Boolean = true,
     val topDominantColor: Color? = null
 )
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val musicRepository: MusicRepository,
-    private val okHttpClient: OkHttpClient
+    private val okHttpClient: OkHttpClient,
+    private val offlineDownloadController: com.gmusic.app.data.download.OfflineDownloadController
 ) : ViewModel() {
 
     val recentTracks: StateFlow<List<Track>> = musicRepository.observeRecentHistory(limit = 10)
@@ -115,8 +118,10 @@ class HomeViewModel @Inject constructor(
 
     private fun observeTopRecentCoverPalette() {
         viewModelScope.launch {
-            recentTracks
-                .map { it.firstOrNull()?.thumbnailUrl }
+            combine(recentTracks, _uiState) { recents, state ->
+                recents.firstOrNull()?.thumbnailUrl
+                    ?: state.sections.firstOrNull()?.items?.firstOrNull()?.thumbnailUrl
+            }
                 .distinctUntilChanged()
                 .collectLatest { coverUrl ->
                     if (coverUrl.isNullOrBlank()) {
@@ -167,7 +172,8 @@ class HomeViewModel @Inject constructor(
                     sections = freshSections,
                     isRefreshing = false,
                     isLoading = false,
-                    currentPage = 1
+                    currentPage = 1,
+                    canLoadMore = true
                 )
             }
         }
@@ -175,7 +181,7 @@ class HomeViewModel @Inject constructor(
 
     fun loadNextPage() {
         val current = _uiState.value
-        if (current.isLoading || current.isRefreshing) return
+        if (current.isLoading || current.isRefreshing || !current.canLoadMore) return
         val nextPage = current.currentPage
         _uiState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
@@ -189,7 +195,8 @@ class HomeViewModel @Inject constructor(
                 old.copy(
                     sections = merged,
                     isLoading = false,
-                    currentPage = nextPage + 1
+                    currentPage = nextPage + 1,
+                    canLoadMore = newSections.isNotEmpty()
                 )
             }
         }
@@ -212,5 +219,13 @@ class HomeViewModel @Inject constructor(
             val id = musicRepository.createPlaylist(title)
             musicRepository.addTrackToPlaylist(id, track)
         }
+    }
+
+    fun downloadTrack(track: Track) {
+        offlineDownloadController.downloadTrack(track)
+    }
+
+    fun removeDownload(track: Track) {
+        offlineDownloadController.removeDownload(track.id)
     }
 }

@@ -773,7 +773,7 @@ class MusicRepository @Inject constructor(
                 }.mapNotNull { it.await() }.forEach { sections.add(it) }
             }
         } else {
-            // Paginazione infinita (page >= 1): carica nuovi scaffali tematici e mix artista
+            // Paginazione scaffali tematici (singolo ciclo / Vol. 1 non indicato, senza volumi infiniti)
             val pagedThemes = listOf(
                 "Focus" to "Lo-Fi Focus Studio Strumentale",
                 "Pop Italiano" to "Hit Pop Italiano",
@@ -786,10 +786,11 @@ class MusicRepository @Inject constructor(
                 "Serata & Festa" to "Party Hits Italia",
                 "Acustico & Unplugged" to "Brani Acustici Chitarra"
             )
-            val startIdx = ((page - 1) * 3) % pagedThemes.size
-            val selectedThemes = (0 until 3).map { offset ->
-                pagedThemes[(startIdx + offset) % pagedThemes.size]
+            val startIdx = (page - 1) * 3
+            if (startIdx >= pagedThemes.size) {
+                return@withContext emptyList()
             }
+            val selectedThemes = pagedThemes.drop(startIdx).take(3)
             coroutineScope {
                 selectedThemes.mapIndexed { idx, (themeTitle, query) ->
                     async {
@@ -799,10 +800,9 @@ class MusicRepository @Inject constructor(
                             emptyList()
                         }
                         if (tracks.isNotEmpty()) {
-                            val displayTitle = if (page > 3) "$themeTitle • Vol. ${page - 2}" else themeTitle
                             HomeSection(
                                 id = "shelf_paged_${page}_${idx}_$themeTitle",
-                                title = displayTitle,
+                                title = themeTitle,
                                 isSongShelf = true,
                                 items = tracks.map { it.toSongShelfItem() },
                                 tracks = tracks

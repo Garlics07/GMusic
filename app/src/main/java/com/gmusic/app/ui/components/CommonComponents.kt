@@ -22,20 +22,29 @@ import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.DownloadDone
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,8 +53,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -67,7 +78,7 @@ fun PlaylistMosaicCover(
     Box(
         modifier = modifier
             .size(size)
-            .clip(RoundedCornerShape(10.dp))
+            .clip(MaterialTheme.shapes.medium)
             .background(MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center
     ) {
@@ -149,6 +160,8 @@ fun TrackRowWithMenu(
     onPlay: () -> Unit,
     onToggleLike: (Track) -> Unit,
     onAddToPlaylistRequest: (Track) -> Unit,
+    onDownloadRequest: ((Track) -> Unit)? = null,
+    onRemoveDownloadRequest: ((Track) -> Unit)? = null,
     onNavigateToArtist: ((String, String) -> Unit)? = null,
     onNavigateToAlbum: ((String, String) -> Unit)? = null,
     onRemoveFromPlaylist: (() -> Unit)? = null,
@@ -234,6 +247,38 @@ fun TrackRowWithMenu(
                         onAddToPlaylistRequest(track)
                     }
                 )
+                if (onDownloadRequest != null || onRemoveDownloadRequest != null) {
+                    if (track.isDownloaded && onRemoveDownloadRequest != null) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.menu_remove_download)) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Filled.Delete,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            },
+                            onClick = {
+                                menuExpanded = false
+                                onRemoveDownloadRequest(track)
+                            }
+                        )
+                    } else if (!track.isDownloaded && onDownloadRequest != null) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.menu_download_track)) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Filled.Download,
+                                    contentDescription = null
+                                )
+                            },
+                            onClick = {
+                                menuExpanded = false
+                                onDownloadRequest(track)
+                            }
+                        )
+                    }
+                }
                 if (onNavigateToArtist != null) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.menu_go_to_artist)) },
@@ -274,6 +319,193 @@ fun TrackRowWithMenu(
                         }
                     )
                 }
+            }
+        }
+    }
+}
+
+/**
+ * Modal BottomSheet per le opzioni contestuali del brano (attivabile anche con long-press in Home).
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TrackOptionsBottomSheet(
+    track: Track,
+    onDismiss: () -> Unit,
+    onPlay: () -> Unit,
+    onToggleLike: (Track) -> Unit,
+    onAddToPlaylistRequest: (Track) -> Unit,
+    onDownloadRequest: ((Track) -> Unit)? = null,
+    onRemoveDownloadRequest: ((Track) -> Unit)? = null,
+    onNavigateToArtist: ((String, String) -> Unit)? = null,
+    onNavigateToAlbum: ((String, String) -> Unit)? = null
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp)
+        ) {
+            // Header con copertina, titolo e artista
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AsyncImage(
+                    model = track.thumbnailUrl,
+                    contentDescription = track.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = track.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = track.artistName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 4.dp),
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+            )
+
+            // Opzione: Riproduci
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.action_play_all)) },
+                leadingContent = {
+                    Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                },
+                modifier = Modifier.clickable {
+                    onDismiss()
+                    onPlay()
+                },
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+            )
+
+            // Opzione: Like / Unlike
+            ListItem(
+                headlineContent = {
+                    Text(
+                        stringResource(
+                            if (track.isLiked) R.string.player_unlike else R.string.player_like
+                        )
+                    )
+                },
+                leadingContent = {
+                    Icon(
+                        imageVector = if (track.isLiked) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                        contentDescription = null,
+                        tint = if (track.isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                modifier = Modifier.clickable {
+                    onDismiss()
+                    onToggleLike(track)
+                },
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+            )
+
+            // Opzione: Aggiungi a playlist
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.player_add_to_playlist)) },
+                leadingContent = {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = null)
+                },
+                modifier = Modifier.clickable {
+                    onDismiss()
+                    onAddToPlaylistRequest(track)
+                },
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+            )
+
+            // Opzione: Scarica brano / Elimina download
+            if (track.isDownloaded && onRemoveDownloadRequest != null) {
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            stringResource(R.string.menu_remove_download),
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    },
+                    leadingContent = {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    },
+                    modifier = Modifier.clickable {
+                        onDismiss()
+                        onRemoveDownloadRequest(track)
+                    },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                )
+            } else if (!track.isDownloaded && onDownloadRequest != null) {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.menu_download_track)) },
+                    leadingContent = {
+                        Icon(imageVector = Icons.Filled.Download, contentDescription = null)
+                    },
+                    modifier = Modifier.clickable {
+                        onDismiss()
+                        onDownloadRequest(track)
+                    },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                )
+            }
+
+            // Opzione: Vai all'artista
+            if (onNavigateToArtist != null) {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.menu_go_to_artist)) },
+                    leadingContent = {
+                        Icon(imageVector = Icons.Filled.Person, contentDescription = null)
+                    },
+                    modifier = Modifier.clickable {
+                        onDismiss()
+                        onNavigateToArtist(track.artistId ?: track.artistName, track.artistName)
+                    },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                )
+            }
+
+            // Opzione: Vai all'album
+            if (onNavigateToAlbum != null && !track.albumId.isNullOrBlank()) {
+                ListItem(
+                    headlineContent = { Text(stringResource(R.string.menu_go_to_album)) },
+                    leadingContent = {
+                        Icon(imageVector = Icons.Filled.Album, contentDescription = null)
+                    },
+                    modifier = Modifier.clickable {
+                        onDismiss()
+                        onNavigateToAlbum(track.albumId, track.albumTitle ?: track.title)
+                    },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                )
             }
         }
     }

@@ -13,6 +13,8 @@ import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
+import com.gmusic.app.R
+
 private val Context.dataStore by preferencesDataStore(name = "gmusic_settings")
 
 data class EqualizerPreset(
@@ -20,6 +22,16 @@ data class EqualizerPreset(
     val labelIt: String,
     val bandsDb: List<Int> // 60 Hz, 230 Hz, 910 Hz, 3.6 kHz, 14 kHz (-15..+15 dB)
 ) {
+    val nameRes: Int
+        get() = when (id) {
+            "bass_boost" -> R.string.eq_preset_bass_boost
+            "rock" -> R.string.eq_preset_rock
+            "pop" -> R.string.eq_preset_pop
+            "jazz" -> R.string.eq_preset_jazz
+            "vocale" -> R.string.eq_preset_vocal
+            else -> R.string.eq_preset_normal
+        }
+
     companion object {
         val ALL_PRESETS = listOf(
             EqualizerPreset("normale", "Normale", listOf(0, 0, 0, 0, 0)),

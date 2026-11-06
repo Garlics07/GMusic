@@ -2,7 +2,7 @@ package com.gmusic.app.ui.library
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,23 +17,27 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDownward
-import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.DownloadDone
-import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -41,15 +45,17 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,10 +65,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -74,15 +81,164 @@ import com.gmusic.app.ui.components.AddToPlaylistDialog
 import com.gmusic.app.ui.components.PlaylistMosaicCover
 import com.gmusic.app.ui.components.TrackRowWithMenu
 
+/**
+ * Reusable sleek search bar for local playlist, liked songs, downloads, and sub-pages.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LocalSearchBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    placeholderText: String,
+    modifier: Modifier = Modifier
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    BasicTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(44.dp),
+        textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
+        singleLine = true,
+        interactionSource = interactionSource,
+        decorationBox = { innerTextField ->
+            OutlinedTextFieldDefaults.DecorationBox(
+                value = query,
+                innerTextField = innerTextField,
+                enabled = true,
+                singleLine = true,
+                visualTransformation = VisualTransformation.None,
+                interactionSource = interactionSource,
+                placeholder = {
+                    Text(
+                        text = placeholderText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.Search,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                trailingIcon = {
+                    if (query.isNotEmpty()) {
+                        IconButton(onClick = { onQueryChange("") }) {
+                            Icon(
+                                imageVector = Icons.Filled.Clear,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                },
+                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
+                container = {
+                    OutlinedTextFieldDefaults.ContainerBox(
+                        enabled = true,
+                        isError = false,
+                        interactionSource = interactionSource,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                        ),
+                        shape = CircleShape
+                    )
+                }
+            )
+        }
+    )
+}
+
+/**
+ * Material Design 3 hub card for Library sections.
+ */
+@Composable
+fun LibraryHubCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    gradientColors: List<Color>,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        tonalElevation = 2.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Brush.linearGradient(gradientColors)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.size(16.dp)
+            )
+        }
+    }
+}
+
 @Composable
 fun LibraryScreen(
     onOpenLikedSongs: () -> Unit,
-    onOpenPlaylist: (String) -> Unit,
-    onOpenAlbum: (String, String) -> Unit,
-    onPlayTrack: (Track, List<Track>) -> Unit,
+    onOpenPlaylists: () -> Unit,
+    onOpenArtists: () -> Unit,
+    onOpenAlbums: () -> Unit,
+    onOpenDownloadedSongs: () -> Unit,
+    onOpenPlaylist: (String) -> Unit = {},
+    onOpenAlbum: (String, String) -> Unit = { _, _ -> },
+    onPlayTrack: (Track, List<Track>) -> Unit = { _, _ -> },
     onOpenArtist: (String, String) -> Unit = { _, _ -> },
     onOpenHistory: () -> Unit = {},
-    onOpenDownloadedSongs: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: LibraryViewModel = hiltViewModel()
 ) {
@@ -100,8 +256,122 @@ fun LibraryScreen(
         }
     }
 
+    val hubSquareGradient = listOf(
+        MaterialTheme.colorScheme.primary,
+        MaterialTheme.colorScheme.tertiary
+    )
+
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        // Barra azioni in alto a destra (sync YT e cronologia) - Senza titolo "Libreria"
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (isLoggedIn) {
+                    IconButton(onClick = { viewModel.syncRemoteLibrary() }) {
+                        Icon(
+                            imageVector = Icons.Filled.Refresh,
+                            contentDescription = stringResource(R.string.library_sync_yt),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                IconButton(onClick = onOpenHistory) {
+                    Icon(
+                        imageVector = Icons.Filled.History,
+                        contentDescription = stringResource(R.string.library_history_title),
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+            }
+        }
+
+        // Card 1: Canzoni preferite
+        item {
+            LibraryHubCard(
+                title = stringResource(R.string.library_liked_songs),
+                subtitle = stringResource(R.string.library_liked_subtitle, likedTracks.size),
+                icon = Icons.Filled.Favorite,
+                gradientColors = hubSquareGradient,
+                onClick = onOpenLikedSongs
+            )
+        }
+
+        // Card 2: Playlist
+        item {
+            val totalPlaylists = if (isLoggedIn) remotePlaylists.size else localPlaylists.size
+            LibraryHubCard(
+                title = stringResource(R.string.filter_playlists),
+                subtitle = stringResource(R.string.library_hub_playlists_subtitle, totalPlaylists),
+                icon = Icons.AutoMirrored.Filled.QueueMusic,
+                gradientColors = hubSquareGradient,
+                onClick = onOpenPlaylists
+            )
+        }
+
+        // Card 3: Artisti
+        item {
+            LibraryHubCard(
+                title = stringResource(R.string.filter_artists),
+                subtitle = stringResource(R.string.library_hub_artists_subtitle, savedArtists.size),
+                icon = Icons.Filled.Person,
+                gradientColors = hubSquareGradient,
+                onClick = onOpenArtists
+            )
+        }
+
+        // Card 4: Album
+        item {
+            LibraryHubCard(
+                title = stringResource(R.string.filter_albums),
+                subtitle = stringResource(R.string.library_hub_albums_subtitle, savedAlbums.size),
+                icon = Icons.Filled.Album,
+                gradientColors = hubSquareGradient,
+                onClick = onOpenAlbums
+            )
+        }
+
+        // Card 5: Canzoni scaricate
+        item {
+            LibraryHubCard(
+                title = stringResource(R.string.library_downloaded_songs),
+                subtitle = stringResource(R.string.library_downloads_subtitle, downloadedTracks.size),
+                icon = Icons.Filled.DownloadDone,
+                gradientColors = hubSquareGradient,
+                onClick = onOpenDownloadedSongs
+            )
+        }
+    }
+}
+
+@Composable
+fun LibraryPlaylistsScreen(
+    onBack: () -> Unit,
+    onOpenPlaylist: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: LibraryViewModel = hiltViewModel()
+) {
+    val isLoggedIn by viewModel.isLoggedIn.collectAsStateWithLifecycle()
+    val localPlaylists by viewModel.localPlaylists.collectAsStateWithLifecycle()
+    val remotePlaylists by viewModel.remotePlaylists.collectAsStateWithLifecycle()
+    val playlists = if (isLoggedIn) remotePlaylists else localPlaylists
+
+    var searchQuery by remember { mutableStateOf("") }
     var showCreateDialog by remember { mutableStateOf(false) }
     var newPlaylistName by remember { mutableStateOf("") }
+
+    val filteredPlaylists = remember(playlists, searchQuery) {
+        if (searchQuery.isBlank()) playlists
+        else playlists.filter { it.title.contains(searchQuery, ignoreCase = true) }
+    }
 
     if (showCreateDialog) {
         AlertDialog(
@@ -139,8 +409,8 @@ fun LibraryScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
             Row(
@@ -148,75 +418,61 @@ fun LibraryScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
                 Text(
-                    text = stringResource(R.string.library_title),
-                    style = MaterialTheme.typography.headlineLarge,
+                    text = stringResource(R.string.filter_playlists),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (isLoggedIn) {
-                        IconButton(onClick = { viewModel.syncRemoteLibrary() }) {
-                            Icon(
-                                imageVector = Icons.Filled.Refresh,
-                                contentDescription = stringResource(R.string.library_sync_yt),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                    IconButton(onClick = onOpenHistory) {
-                        Icon(
-                            imageVector = Icons.Filled.History,
-                            contentDescription = stringResource(R.string.library_history_title),
-                            tint = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
+                IconButton(onClick = { showCreateDialog = true }) {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = stringResource(R.string.library_create_playlist),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
         }
 
-        // Riga "Canzoni preferite" (in visualizzazione coerente con le playlist: copertina a sinistra e testo a destra)
         item {
+            LocalSearchBar(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it },
+                placeholderText = stringResource(R.string.search_placeholder_playlists)
+            )
+        }
+
+        items(filteredPlaylists, key = { it.id }) { pl ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .clickable(onClick = onOpenLikedSongs)
+                    .clickable { onOpenPlaylist(pl.id) }
                     .padding(vertical = 6.dp, horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.tertiary
-                                )
-                            )
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Favorite,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
+                PlaylistMosaicCover(thumbnailUrls = pl.thumbnailUrls, size = 60.dp)
                 Spacer(modifier = Modifier.width(14.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = stringResource(R.string.library_liked_songs),
+                        text = pl.title,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onBackground,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    val sub = pl.author?.takeIf { it.isNotBlank() }
+                        ?: if (pl.trackCount > 0) stringResource(R.string.library_track_count, pl.trackCount)
+                        else stringResource(R.string.playlist_item_type)
                     Text(
-                        text = stringResource(R.string.library_liked_subtitle, likedTracks.size),
+                        text = sub,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -225,50 +481,87 @@ fun LibraryScreen(
                 }
             }
         }
+    }
+}
 
-        // Riga "Canzoni scaricate" (posizionata subito sotto Canzoni preferite)
+@Composable
+fun LibraryArtistsScreen(
+    onBack: () -> Unit,
+    onOpenArtist: (String, String) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: LibraryViewModel = hiltViewModel()
+) {
+    val savedArtists by viewModel.savedArtists.collectAsStateWithLifecycle()
+    var searchQuery by remember { mutableStateOf("") }
+    val filteredArtists = remember(savedArtists, searchQuery) {
+        if (searchQuery.isBlank()) savedArtists
+        else savedArtists.filter { it.name.contains(searchQuery, ignoreCase = true) }
+    }
+
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
         item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.filter_artists),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
+        }
+
+        item {
+            LocalSearchBar(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it },
+                placeholderText = stringResource(R.string.search_placeholder_artists)
+            )
+        }
+
+        items(filteredArtists, key = { "saved_art_${it.id}" }) { artist ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .clickable(onClick = onOpenDownloadedSongs)
+                    .clickable { onOpenArtist(artist.id, artist.name) }
                     .padding(vertical = 6.dp, horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
+                AsyncImage(
+                    model = artist.thumbnailUrl,
+                    contentDescription = artist.name,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .size(60.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.tertiary
-                                )
-                            )
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.DownloadDone,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                )
                 Spacer(modifier = Modifier.width(14.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = stringResource(R.string.library_downloaded_songs),
+                        text = artist.name,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onBackground,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        text = stringResource(R.string.library_downloads_subtitle, downloadedTracks.size),
+                        text = artist.subscribersText?.takeIf { it.isNotBlank() } ?: stringResource(R.string.filter_artists),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -277,222 +570,93 @@ fun LibraryScreen(
                 }
             }
         }
+    }
+}
 
-        if (isLoggedIn) {
-            // Quando l'utente è loggato con Google, mostra ESCLUSIVAMENTE le playlist di YouTube Music
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(R.string.library_yt_playlists),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    IconButton(onClick = { showCreateDialog = true }) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = stringResource(R.string.library_create_playlist),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
-            if (remotePlaylists.isEmpty()) {
-                item {
-                    Text(
-                        text = stringResource(R.string.library_empty_playlists),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            } else {
-                items(remotePlaylists, key = { "yt_pl_${it.id}" }) { pl ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .clickable { onOpenPlaylist(pl.id) }
-                            .padding(vertical = 6.dp, horizontal = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        PlaylistMosaicCover(thumbnailUrls = pl.thumbnailUrls, size = 60.dp)
-                        Spacer(modifier = Modifier.width(14.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = pl.title,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onBackground,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            val sub = pl.author?.takeIf { it.isNotBlank() }
-                                ?: if (pl.trackCount > 0) stringResource(R.string.library_track_count, pl.trackCount)
-                                else "YouTube Music"
-                            Text(
-                                text = sub,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-                }
-            }
-        } else {
-            // Modalità Ospite (Guest): Playlist locali con copertina automatica 2x2
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(R.string.library_playlists),
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    IconButton(onClick = { showCreateDialog = true }) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = stringResource(R.string.library_create_playlist),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
-
-            if (localPlaylists.isEmpty()) {
-                item {
-                    Text(
-                        text = stringResource(R.string.library_empty_playlists),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            } else {
-                items(localPlaylists, key = { it.id }) { pl ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .clickable { onOpenPlaylist(pl.id) }
-                            .padding(vertical = 6.dp, horizontal = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        PlaylistMosaicCover(thumbnailUrls = pl.thumbnailUrls, size = 60.dp)
-                        Spacer(modifier = Modifier.width(14.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = pl.title,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                            Text(
-                                text = stringResource(R.string.library_track_count, pl.trackCount),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-            }
+@Composable
+fun LibraryAlbumsScreen(
+    onBack: () -> Unit,
+    onOpenAlbum: (String, String) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: LibraryViewModel = hiltViewModel()
+) {
+    val savedAlbums by viewModel.savedAlbums.collectAsStateWithLifecycle()
+    var searchQuery by remember { mutableStateOf("") }
+    val filteredAlbums = remember(savedAlbums, searchQuery) {
+        if (searchQuery.isBlank()) savedAlbums
+        else savedAlbums.filter {
+            it.title.contains(searchQuery, ignoreCase = true) || it.artistName.contains(searchQuery, ignoreCase = true)
         }
+    }
 
-        // Artisti preferiti (sincronizzati con YouTube Music)
-        if (savedArtists.isNotEmpty()) {
-            item {
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = stringResource(R.string.library_saved_artists),
+                    text = stringResource(R.string.filter_albums),
                     style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
             }
-            items(savedArtists, key = { "saved_art_${it.id}" }) { artist ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable { onOpenArtist(artist.id, artist.name) }
-                        .padding(vertical = 6.dp, horizontal = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    AsyncImage(
-                        model = artist.thumbnailUrl,
-                        contentDescription = artist.name,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                    )
-                    Spacer(modifier = Modifier.width(14.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = artist.name,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            text = artist.subscribersText?.takeIf { it.isNotBlank() } ?: stringResource(R.string.filter_artists),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-            }
         }
 
-        // Album preferiti (sincronizzati con YouTube Music)
-        if (savedAlbums.isNotEmpty()) {
-            item {
-                Text(
-                    text = stringResource(R.string.library_saved_albums),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            }
-            items(savedAlbums, key = { "saved_alb_${it.id}" }) { album ->
-                Row(
+        item {
+            LocalSearchBar(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it },
+                placeholderText = stringResource(R.string.search_placeholder_albums)
+            )
+        }
+
+        items(filteredAlbums, key = { "saved_alb_${it.id}" }) { album ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { onOpenAlbum(album.id, album.title) }
+                    .padding(vertical = 6.dp, horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AsyncImage(
+                    model = album.thumbnailUrl,
+                    contentDescription = album.title,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable { onOpenAlbum(album.id, album.title) }
-                        .padding(vertical = 6.dp, horizontal = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    AsyncImage(
-                        model = album.thumbnailUrl,
-                        contentDescription = album.title,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(RoundedCornerShape(8.dp))
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                )
+                Spacer(modifier = Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = album.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
-                    Spacer(modifier = Modifier.width(14.dp))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = album.title,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            text = album.artistName,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
+                    Text(
+                        text = album.artistName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
         }
@@ -511,6 +675,14 @@ fun LikedSongsScreen(
     val likedTracks by viewModel.likedTracks.collectAsStateWithLifecycle()
     val playlists by viewModel.playlists.collectAsStateWithLifecycle()
     var trackForPlaylistDialog by remember { mutableStateOf<Track?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
+
+    val filteredTracks = remember(likedTracks, searchQuery) {
+        if (searchQuery.isBlank()) likedTracks
+        else likedTracks.filter {
+            it.title.contains(searchQuery, ignoreCase = true) || it.artistName.contains(searchQuery, ignoreCase = true)
+        }
+    }
 
     trackForPlaylistDialog?.let { selectedTrack ->
         AddToPlaylistDialog(
@@ -524,7 +696,7 @@ fun LikedSongsScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
@@ -544,7 +716,7 @@ fun LikedSongsScreen(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(150.dp)
+                        .size(140.dp)
                         .clip(RoundedCornerShape(16.dp))
                         .background(
                             Brush.linearGradient(
@@ -560,7 +732,7 @@ fun LikedSongsScreen(
                         imageVector = Icons.Filled.Favorite,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(64.dp)
+                        modifier = Modifier.size(60.dp)
                     )
                 }
                 Spacer(modifier = Modifier.height(14.dp))
@@ -582,7 +754,7 @@ fun LikedSongsScreen(
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button(
-                        onClick = { onPlayTrack(likedTracks.first(), likedTracks) },
+                        onClick = { onPlayTrack(filteredTracks.first(), filteredTracks) },
                         modifier = Modifier.weight(1f)
                     ) {
                         Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null)
@@ -591,7 +763,7 @@ fun LikedSongsScreen(
                     }
                     FilledTonalButton(
                         onClick = {
-                            val shuffled = likedTracks.shuffled()
+                            val shuffled = filteredTracks.shuffled()
                             onPlayTrack(shuffled.first(), shuffled)
                         },
                         modifier = Modifier.weight(1f)
@@ -602,22 +774,26 @@ fun LikedSongsScreen(
                     }
                 }
             }
-            items(likedTracks, key = { it.id }) { track ->
-                TrackRowWithMenu(
-                    track = track,
-                    onPlay = { onPlayTrack(track, likedTracks) },
-                    onToggleLike = viewModel::toggleLike,
-                    onAddToPlaylistRequest = { trackForPlaylistDialog = it },
-                    onNavigateToArtist = onNavigateToArtist,
-                    onNavigateToAlbum = onNavigateToAlbum
+
+            // Ricerca locale nei brani preferiti
+            item {
+                LocalSearchBar(
+                    query = searchQuery,
+                    onQueryChange = { searchQuery = it },
+                    placeholderText = stringResource(R.string.search_placeholder_liked)
                 )
             }
-        } else {
-            item {
-                Text(
-                    text = stringResource(R.string.library_empty_tracks),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+
+            items(filteredTracks, key = { it.id }) { track ->
+                TrackRowWithMenu(
+                    track = track,
+                    onPlay = { onPlayTrack(track, filteredTracks) },
+                    onToggleLike = viewModel::toggleLike,
+                    onAddToPlaylistRequest = { trackForPlaylistDialog = it },
+                    onDownloadRequest = viewModel::downloadTrack,
+                    onRemoveDownloadRequest = viewModel::removeDownload,
+                    onNavigateToArtist = onNavigateToArtist,
+                    onNavigateToAlbum = onNavigateToAlbum
                 )
             }
         }
@@ -634,8 +810,17 @@ fun DownloadedSongsScreen(
     viewModel: LibraryViewModel = hiltViewModel()
 ) {
     val downloadedTracks by viewModel.downloadedTracks.collectAsStateWithLifecycle()
+    val downloadProgressMap by viewModel.downloadProgress.collectAsStateWithLifecycle()
     val playlists by viewModel.playlists.collectAsStateWithLifecycle()
     var trackForPlaylistDialog by remember { mutableStateOf<Track?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
+
+    val filteredTracks = remember(downloadedTracks, searchQuery) {
+        if (searchQuery.isBlank()) downloadedTracks
+        else downloadedTracks.filter {
+            it.title.contains(searchQuery, ignoreCase = true) || it.artistName.contains(searchQuery, ignoreCase = true)
+        }
+    }
 
     trackForPlaylistDialog?.let { selectedTrack ->
         AddToPlaylistDialog(
@@ -649,7 +834,7 @@ fun DownloadedSongsScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
@@ -669,7 +854,7 @@ fun DownloadedSongsScreen(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(150.dp)
+                        .size(140.dp)
                         .clip(RoundedCornerShape(16.dp))
                         .background(
                             Brush.linearGradient(
@@ -685,7 +870,7 @@ fun DownloadedSongsScreen(
                         imageVector = Icons.Filled.DownloadDone,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(64.dp)
+                        modifier = Modifier.size(60.dp)
                     )
                 }
                 Spacer(modifier = Modifier.height(14.dp))
@@ -707,7 +892,7 @@ fun DownloadedSongsScreen(
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button(
-                        onClick = { onPlayTrack(downloadedTracks.first(), downloadedTracks) },
+                        onClick = { onPlayTrack(filteredTracks.first(), filteredTracks) },
                         modifier = Modifier.weight(1f)
                     ) {
                         Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null)
@@ -716,7 +901,7 @@ fun DownloadedSongsScreen(
                     }
                     FilledTonalButton(
                         onClick = {
-                            val shuffled = downloadedTracks.shuffled()
+                            val shuffled = filteredTracks.shuffled()
                             onPlayTrack(shuffled.first(), shuffled)
                         },
                         modifier = Modifier.weight(1f)
@@ -727,23 +912,67 @@ fun DownloadedSongsScreen(
                     }
                 }
             }
-            items(downloadedTracks, key = { "dl_${it.id}" }) { track ->
-                TrackRowWithMenu(
-                    track = track,
-                    onPlay = { onPlayTrack(track, downloadedTracks) },
-                    onToggleLike = viewModel::toggleLike,
-                    onAddToPlaylistRequest = { trackForPlaylistDialog = it },
-                    onNavigateToArtist = onNavigateToArtist,
-                    onNavigateToAlbum = onNavigateToAlbum
+
+            // Ricerca locale nei brani scaricati
+            item {
+                LocalSearchBar(
+                    query = searchQuery,
+                    onQueryChange = { searchQuery = it },
+                    placeholderText = stringResource(R.string.search_placeholder_downloads)
                 )
             }
-        } else {
-            item {
-                Text(
-                    text = stringResource(R.string.library_empty_downloads),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+
+            items(filteredTracks, key = { "dl_${it.id}" }) { track ->
+                val progress = downloadProgressMap[track.id]
+                val isDownloading = progress != null
+
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    TrackRowWithMenu(
+                        track = track,
+                        onPlay = { onPlayTrack(track, filteredTracks) },
+                        onToggleLike = viewModel::toggleLike,
+                        onAddToPlaylistRequest = { trackForPlaylistDialog = it },
+                        onDownloadRequest = viewModel::downloadTrack,
+                        onRemoveDownloadRequest = viewModel::removeDownload,
+                        onNavigateToArtist = onNavigateToArtist,
+                        onNavigateToAlbum = onNavigateToAlbum
+                    )
+                    if (isDownloading) {
+                        val progressVal = (progress ?: 0.05f).coerceIn(0.05f, 0.99f)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 68.dp, end = 12.dp, bottom = 8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.downloading_in_progress),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = "${(progressVal * 100).toInt()}%",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            LinearProgressIndicator(
+                                progress = { progressVal },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(3.dp)
+                                    .clip(RoundedCornerShape(2.dp)),
+                                color = MaterialTheme.colorScheme.primary,
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -771,6 +1000,14 @@ fun PlaylistDetailScreen(
     var showRenameDialog by remember { mutableStateOf(false) }
     var renameText by remember(summary?.title) { mutableStateOf(summary?.title ?: "") }
     var trackForPlaylistDialog by remember { mutableStateOf<Track?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
+
+    val filteredTracks = remember(localTracks, searchQuery) {
+        if (searchQuery.isBlank()) localTracks.toList()
+        else localTracks.filter {
+            it.title.contains(searchQuery, ignoreCase = true) || it.artistName.contains(searchQuery, ignoreCase = true)
+        }
+    }
 
     if (trackForPlaylistDialog != null) {
         val selectedTrack = trackForPlaylistDialog!!
@@ -816,7 +1053,7 @@ fun PlaylistDetailScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
@@ -863,12 +1100,13 @@ fun PlaylistDetailScreen(
             ) {
                 PlaylistMosaicCover(
                     thumbnailUrls = summary?.thumbnailUrls.orEmpty(),
-                    size = 172.dp
+                    size = 160.dp
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = summary?.title ?: "",
                     style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
@@ -884,7 +1122,7 @@ fun PlaylistDetailScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button(
                         onClick = {
-                            val shuffled = localTracks.shuffled()
+                            val shuffled = filteredTracks.shuffled()
                             onPlayTrack(shuffled.first(), shuffled)
                         },
                         modifier = Modifier.weight(1f)
@@ -895,7 +1133,7 @@ fun PlaylistDetailScreen(
                     }
                     FilledTonalButton(
                         onClick = {
-                            viewModel.downloadTracks(localTracks.toList())
+                            viewModel.downloadTracks(filteredTracks)
                         },
                         modifier = Modifier.weight(1f)
                     ) {
@@ -906,26 +1144,29 @@ fun PlaylistDetailScreen(
                 }
             }
 
-            items(localTracks, key = { it.id }) { track ->
+            // Ricerca locale nei brani della playlist
+            item {
+                LocalSearchBar(
+                    query = searchQuery,
+                    onQueryChange = { searchQuery = it },
+                    placeholderText = stringResource(R.string.search_placeholder_playlist_tracks)
+                )
+            }
+
+            items(filteredTracks, key = { it.id }) { track ->
                 TrackRowWithMenu(
                     track = track,
-                    onPlay = { onPlayTrack(track, localTracks.toList()) },
+                    onPlay = { onPlayTrack(track, filteredTracks) },
                     onToggleLike = viewModel::toggleLike,
                     onAddToPlaylistRequest = { trackForPlaylistDialog = it },
+                    onDownloadRequest = viewModel::downloadTrack,
+                    onRemoveDownloadRequest = viewModel::removeDownload,
                     onNavigateToArtist = onNavigateToArtist,
                     onNavigateToAlbum = onNavigateToAlbum,
                     onRemoveFromPlaylist = {
                         localTracks.removeAll { it.id == track.id }
                         viewModel.removeTrackFromPlaylist(playlistId, track.id)
                     }
-                )
-            }
-        } else {
-            item {
-                Text(
-                    text = stringResource(R.string.library_empty_tracks),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -993,92 +1234,95 @@ fun HistoryScreen(
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-                Text(
-                    text = stringResource(R.string.library_history_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                if (historyTracks.isNotEmpty()) {
-                    IconButton(onClick = { showClearDialog = true }) {
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onBack) {
                         Icon(
-                            imageVector = Icons.Filled.DeleteSweep,
-                            contentDescription = stringResource(R.string.library_clear_history),
-                            tint = MaterialTheme.colorScheme.error
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
-                } else {
-                    Spacer(modifier = Modifier.size(48.dp))
-                }
-            }
-        }
-
-        if (historyTracks.isNotEmpty()) {
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(
-                        onClick = { onPlayTrack(historyTracks.first(), historyTracks) },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(R.string.action_play_all))
-                    }
-                    FilledTonalButton(
-                        onClick = {
-                            val shuffled = historyTracks.shuffled()
-                            onPlayTrack(shuffled.first(), shuffled)
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(imageVector = Icons.Filled.Shuffle, contentDescription = null)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(R.string.action_shuffle_play))
-                    }
-                }
-            }
-
-            items(historyTracks, key = { "hist_${it.id}" }) { track ->
-                TrackRowWithMenu(
-                    track = track,
-                    onPlay = { onPlayTrack(track, historyTracks) },
-                    onToggleLike = viewModel::toggleLike,
-                    onAddToPlaylistRequest = { trackForPlaylistDialog = it },
-                    onNavigateToArtist = onNavigateToArtist,
-                    onNavigateToAlbum = onNavigateToAlbum
-                )
-            }
-        } else {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 48.dp),
-                    contentAlignment = Alignment.Center
-                ) {
                     Text(
-                        text = stringResource(R.string.library_empty_history),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = stringResource(R.string.library_history_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
                     )
+                    if (historyTracks.isNotEmpty()) {
+                        IconButton(onClick = { showClearDialog = true }) {
+                            Icon(
+                                imageVector = Icons.Filled.DeleteSweep,
+                                contentDescription = stringResource(R.string.library_clear_history),
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    } else {
+                        Spacer(modifier = Modifier.size(48.dp))
+                    }
+                }
+            }
+
+            if (historyTracks.isNotEmpty()) {
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Button(
+                            onClick = { onPlayTrack(historyTracks.first(), historyTracks) },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(stringResource(R.string.action_play_all))
+                        }
+                        FilledTonalButton(
+                            onClick = {
+                                val shuffled = historyTracks.shuffled()
+                                onPlayTrack(shuffled.first(), shuffled)
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(imageVector = Icons.Filled.Shuffle, contentDescription = null)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(stringResource(R.string.action_shuffle_play))
+                        }
+                    }
+                }
+
+                items(historyTracks, key = { "hist_${it.id}" }) { track ->
+                    TrackRowWithMenu(
+                        track = track,
+                        onPlay = { onPlayTrack(track, historyTracks) },
+                        onToggleLike = viewModel::toggleLike,
+                        onAddToPlaylistRequest = { trackForPlaylistDialog = it },
+                        onDownloadRequest = viewModel::downloadTrack,
+                        onRemoveDownloadRequest = viewModel::removeDownload,
+                        onNavigateToArtist = onNavigateToArtist,
+                        onNavigateToAlbum = onNavigateToAlbum
+                    )
+                }
+            } else {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 48.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = stringResource(R.string.library_empty_history),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }
     }
-}
 }

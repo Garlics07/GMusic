@@ -44,7 +44,8 @@ data class SearchUiState(
 
 @HiltViewModel
 class SearchViewModel @Inject constructor(
-    private val musicRepository: MusicRepository
+    private val musicRepository: MusicRepository,
+    private val offlineDownloadController: com.gmusic.app.data.download.OfflineDownloadController
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SearchUiState())
@@ -165,5 +166,13 @@ class SearchViewModel @Inject constructor(
             val id = musicRepository.createPlaylist(title)
             musicRepository.addTrackToPlaylist(id, track)
         }
+    }
+
+    fun downloadTrack(track: Track) {
+        offlineDownloadController.downloadTrack(track)
+    }
+
+    fun removeDownload(track: Track) {
+        offlineDownloadController.removeDownload(track.id)
     }
 }

@@ -150,4 +150,60 @@
     <string name="auto_lib_albums">Albums</string>
     <string name="auto_lib_artists">Artists</string>
     <string name="auto_lib_downloads">Downloads</string>
+
+    <!-- Library Hub & Placeholders -->
+    <string name="library_hub_playlists_subtitle">%1$d playlists</string>
+    <string name="library_hub_artists_subtitle">%1$d saved artists</string>
+    <string name="library_hub_albums_subtitle">%1$d saved albums</string>
+    <string name="search_placeholder_playlists">Search playlists…</string>
+    <string name="search_placeholder_artists">Search artists…</string>
+    <string name="search_placeholder_albums">Search albums…</string>
+    <string name="search_placeholder_liked">Search liked songs…</string>
+    <string name="search_placeholder_downloads">Search downloads…</string>
+    <string name="search_placeholder_playlist_tracks">Search this playlist…</string>
+    <string name="playlist_item_type">Playlist</string>
+
+    <!-- Settings Additional Strings -->
+    <string name="settings_google_account">Google Account</string>
+    <string name="settings_theme_dynamic_title">Material You (Dynamic Colors)</string>
+    <string name="settings_theme_dynamic_desc">The app faithfully adopts the dynamic colors extracted from your Android device wallpaper (Monet), ensuring visual consistency across all screens.</string>
+    <string name="settings_quality_high_desc">Opus itag 251 (160 kbps) preferred with AAC itag 140 fallback. No video decoded (strict Audio Only).</string>
+    <string name="settings_eq_presets">Presets</string>
+    <string name="eq_preset_normal">Normal</string>
+    <string name="eq_preset_bass_boost">Bass Boost</string>
+    <string name="eq_preset_rock">Rock</string>
+    <string name="eq_preset_pop">Pop</string>
+    <string name="eq_preset_jazz">Jazz</string>
+    <string name="eq_preset_vocal">Vocal</string>
+    <string name="settings_bass_boost">Bass Boost</string>
+    <string name="settings_virtualizer">Surround Virtualizer</string>
+    <string name="settings_frequency_bands">Frequency Bands</string>
+    <string name="settings_storage_used">Storage Used</string>
+    <string name="settings_cache_used_format">%1$d MB used</string>
+    <string name="settings_cache_used_total_format">Cache space used: %1$d MB / 512 MB</string>
+    <string name="settings_cache_desc">Includes audio files stored in the temporary playback LRU cache.</string>
+    <string name="settings_version_format">Version %1$s (Material Design 3)</string>
+    <string name="settings_app_subtitle">Audio-Only Streaming Client • YouTube Music Backend</string>
+    <string name="settings_changelog_title">Development Changelog</string>
+    <string name="menu_download_track">Download track</string>
+    <string name="menu_remove_download">Delete download</string>
+    <string name="downloading_in_progress">Downloading…</string>
+    <string name="settings_changelog_v289_title">v2.8.9 (Current) - YouTube Music Deep Links &amp; Sharing</string>
+    <string name="settings_changelog_v289_desc">• Open shared YouTube Music and youtu.be links directly in GMusic\n• Immediate playback &amp; full-screen player for shared songs\n• Support for shared playlists, albums and artist channels\n• Seamless in-place Android app update</string>
+    <string name="settings_changelog_v285_title">v2.8.5 - Download Experience &amp; Improvements</string>
+    <string name="settings_changelog_v285_desc">• Interactive download animation on full-screen player\n• Real-time progress bar in Downloaded Songs\n• Download action added to 3-dots track options menu\n• Long-press songs on Home to open track options</string>
+    <string name="settings_changelog_v280_title">v2.8.0 - Material Design 3 Edition</string>
+    <string name="settings_changelog_v280_desc">• 100% Material Design 3 (Material You) with M3 shapes and Poppins + JetBrains Mono typography\n• Fullscreen player with interactive sinusoidal WavySlider\n• Solid floating bottom bar with instant return to root\n• Dynamic top home gradient proportional to the 3x2 grid\n• Compact search with history shown on focus\n• Library in 5 cards (Liked, Playlists, Artists, Albums, Downloads) with real-time local search\n• Smart 3-track pre-caching for gapless playback\n• Dynamic versioning and streamlined login</string>
+    <string name="settings_changelog_v270_desc">• Native multilingual support for 4 languages (Italian, English, Français, Español) based on system settings\n• Dynamic automatic translation of all Home sections and shelves\n• Official YouTube Music two-way history tracking and sync\n• Streamlined Google account header with avatar, name and quick sign out</string>
+    <string name="settings_changelog_v260_desc">• Official new logo across mobile, Android Auto, widget, and UI\n• Compact \'+\' button to create new playlists\n• \'Downloaded Songs\' section with shuffle and playback\n• Playlist management: track removal in three dots, shuffle, and download buttons\n• Centered settings bottom sheet modal</string>
+    <string name="settings_changelog_v250_desc">• Real-time YouTube Music watchtime synchronization\n• Full playlist management (create, add, and remove tracks locally and on YT)\n• Listening history integrated into Library\n• Essential artist page with shuffle and favorite artist toggle\n• Dynamic search filters (active when query is entered)\n• Official Top 100 YouTube Music charts\n• Interactive Settings popup modal</string>
+    <string name="settings_changelog_v240_desc">• Official audio album tracks only (ATV, no OMV/UGC music videos)\n• Original 1:1 HD artwork for all album tracks\n• Instant artist radio on Android Auto\n• Heart icon for Library on Android Auto\n• Status bar insets on all sub-screens</string>
+    <string name="settings_changelog_v230_desc">• Redesigned Home interface with 2x3 \'Recent Plays\' grid\n• Dynamic gradient with animated Palette\n• Infinite smooth paged carousels</string>
+    <string name="settings_changelog_v200_desc">• Complete application rewrite from scratch\n• Jetpack Compose Material 3, Media3 ExoPlayer, and Android Auto\n• Resilient Opus 251 / AAC 140 resolver with NewPipeExtractor</string>
+    <string name="settings_instances_piped_csv">Piped instances (comma-separated)</string>
+    <string name="settings_instances_invidious_csv">Invidious instances (comma-separated)</string>
+    <string name="settings_account_connected">Status: Connected to YouTube Music</string>
+    <string name="settings_about_desc">GMusic v%1$s • Audio-only streaming (Opus 251 / AAC 140) • 100% Material Design 3</string>
+    <string name="state_on">ON</string>
+    <string name="state_off">OFF</string>
 </resources>

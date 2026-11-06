@@ -7,8 +7,10 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -44,7 +47,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -67,6 +72,8 @@ import com.gmusic.app.domain.model.HomeSection
 import com.gmusic.app.domain.model.HomeShelfItem
 import com.gmusic.app.domain.model.PlaylistSummary
 import com.gmusic.app.domain.model.Track
+import com.gmusic.app.ui.components.AddToPlaylistDialog
+import com.gmusic.app.ui.components.TrackOptionsBottomSheet
 
 private sealed interface QuickAccessGridEntry {
     data object LikedSongs : QuickAccessGridEntry
@@ -98,6 +105,9 @@ fun HomeScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
 
+    var selectedTrackForMenu by remember { mutableStateOf<Track?>(null) }
+    var trackForPlaylistDialog by remember { mutableStateOf<Track?>(null) }
+
     val visibleSections = remember(state.sections, state.selectedFilter) {
         when (state.selectedFilter) {
             HomeChipFilter.ALL -> state.sections
@@ -115,14 +125,14 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(shouldLoadMore, state.isLoading, state.isRefreshing) {
-        if (shouldLoadMore && !state.isLoading && !state.isRefreshing) {
+    LaunchedEffect(shouldLoadMore, state.isLoading, state.isRefreshing, state.canLoadMore) {
+        if (shouldLoadMore && !state.isLoading && !state.isRefreshing && state.canLoadMore) {
             viewModel.loadNextPage()
         }
     }
 
-    val defaultTint = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.38f)
-    val targetTint = if (recentTracks.isNotEmpty() && state.topDominantColor != null) {
+    val defaultTint = MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+    val targetTint = if (state.topDominantColor != null) {
         state.topDominantColor!!.copy(alpha = 0.52f)
     } else {
         defaultTint
@@ -144,21 +154,55 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(backgroundColor),
-            contentPadding = PaddingValues(bottom = 32.dp),
+            contentPadding = PaddingValues(bottom = 96.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // 1. Sezione superiore con gradiente dinamico di 280dp + Top Bar (Avatar 32dp + Chips) + Griglia 2x3
+            // 1. Sezione superiore con gradiente dinamico adattivo alla griglia 3x2 + Top Bar + Chips
             item(key = "home_top_header_and_grid") {
+                // 2. Griglia 3x2: Slot 1 Canzoni preferite, Slot 2-6 mix randomico tra playlist, artisti e brani recenti
+                val gridEntries = remember(recentTracks, likedTracks, playlists, savedArtists) {
+                    buildList {
+                        add(QuickAccessGridEntry.LikedSongs)
+                        val pool = mutableListOf<QuickAccessGridEntry>()
+                        playlists.take(6).forEach { pool.add(QuickAccessGridEntry.PlaylistEntry(it)) }
+                        savedArtists.take(6).forEach { pool.add(QuickAccessGridEntry.ArtistEntry(it)) }
+                        recentTracks.take(6).forEach { pool.add(QuickAccessGridEntry.RecentTrack(it)) }
+
+                        val shuffled = pool.shuffled(java.util.Random(System.currentTimeMillis() / 60000L))
+                        for (cand in shuffled) {
+                            if (size >= 6) break
+                            add(cand)
+                        }
+                        if (size < 6) {
+                            for (track in recentTracks) {
+                                if (size >= 6) break
+                                val entry = QuickAccessGridEntry.RecentTrack(track)
+                                if (!contains(entry)) add(entry)
+                            }
+                        }
+                    }
+                }
+                val rowCount = (gridEntries.size + 1) / 2
+                val minHeaderHeight = when (rowCount) {
+                    0 -> 180.dp
+                    1 -> 240.dp
+                    2 -> 300.dp
+                    else -> 360.dp
+                }
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .heightIn(min = minHeaderHeight)
                         .background(
                             Brush.verticalGradient(
-                                colors = listOf(animatedTopTint, backgroundColor),
-                                startY = 0f,
-                                endY = 780f
+                                0.0f to animatedTopTint.copy(alpha = 0.60f),
+                                0.35f to animatedTopTint.copy(alpha = 0.28f),
+                                0.70f to animatedTopTint.copy(alpha = 0.08f),
+                                1.0f to Color.Transparent
                             )
                         )
+                        .padding(bottom = 12.dp)
                 ) {
                     Column(
                         modifier = Modifier
@@ -183,13 +227,7 @@ fun HomeScreen(
                                         if (isLoggedIn) MaterialTheme.colorScheme.primary
                                         else MaterialTheme.colorScheme.surfaceVariant
                                     )
-                                    .clickable(onClick = {
-                                        if (!isLoggedIn) {
-                                            onOpenWebLogin()
-                                        } else {
-                                            onOpenAccount()
-                                        }
-                                    }),
+                                    .clickable(onClick = onOpenSettings),
                                 contentAlignment = Alignment.Center
                             ) {
                                 if (!accountAvatarUrl.isNullOrBlank()) {
@@ -224,30 +262,6 @@ fun HomeScreen(
                             )
                         }
 
-                        // 2. Griglia 3x2: Slot 1 Canzoni preferite, Slot 2-6 mix randomico tra playlist, artisti e brani recenti
-                        val gridEntries = remember(recentTracks, likedTracks, playlists, savedArtists) {
-                            buildList {
-                                add(QuickAccessGridEntry.LikedSongs)
-                                val pool = mutableListOf<QuickAccessGridEntry>()
-                                playlists.take(6).forEach { pool.add(QuickAccessGridEntry.PlaylistEntry(it)) }
-                                savedArtists.take(6).forEach { pool.add(QuickAccessGridEntry.ArtistEntry(it)) }
-                                recentTracks.take(6).forEach { pool.add(QuickAccessGridEntry.RecentTrack(it)) }
-
-                                val shuffled = pool.shuffled(java.util.Random(System.currentTimeMillis() / 60000L))
-                                for (cand in shuffled) {
-                                    if (size >= 6) break
-                                    add(cand)
-                                }
-                                if (size < 6) {
-                                    for (track in recentTracks) {
-                                        if (size >= 6) break
-                                        val entry = QuickAccessGridEntry.RecentTrack(track)
-                                        if (!contains(entry)) add(entry)
-                                    }
-                                }
-                            }
-                        }
-
                         if (gridEntries.isNotEmpty()) {
                             Column(
                                 modifier = Modifier
@@ -273,6 +287,7 @@ fun HomeScreen(
                                                     RecentGridCard(
                                                         track = entry.track,
                                                         onClick = { onPlayTrack(entry.track, recentTracks) },
+                                                        onLongClick = { selectedTrackForMenu = entry.track },
                                                         modifier = Modifier.weight(1f)
                                                     )
                                                 }
@@ -316,6 +331,7 @@ fun HomeScreen(
             ) { section ->
                 HomeShelfSection(
                     section = section,
+                    onSongLongClick = { selectedTrackForMenu = it },
                     onItemClick = { item ->
                         when (item.type) {
                             HomeItemType.SONG -> {
@@ -359,6 +375,36 @@ fun HomeScreen(
                 }
             }
         }
+
+        selectedTrackForMenu?.let { track ->
+            TrackOptionsBottomSheet(
+                track = track,
+                onDismiss = { selectedTrackForMenu = null },
+                onPlay = {
+                    selectedTrackForMenu = null
+                    onPlayTrack(track, listOf(track))
+                },
+                onToggleLike = viewModel::toggleLike,
+                onAddToPlaylistRequest = {
+                    selectedTrackForMenu = null
+                    trackForPlaylistDialog = it
+                },
+                onDownloadRequest = viewModel::downloadTrack,
+                onRemoveDownloadRequest = viewModel::removeDownload,
+                onNavigateToArtist = onNavigateToArtist,
+                onNavigateToAlbum = onNavigateToAlbum
+            )
+        }
+
+        trackForPlaylistDialog?.let { selectedTrack ->
+            AddToPlaylistDialog(
+                track = selectedTrack,
+                playlists = playlists,
+                onSelectPlaylist = viewModel::addTrackToPlaylist,
+                onCreateAndAdd = viewModel::createPlaylistAndAdd,
+                onDismiss = { trackForPlaylistDialog = null }
+            )
+        }
     }
 }
 
@@ -398,20 +444,25 @@ private fun SpotifyFilterChip(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun RecentGridCard(
     track: Track,
     onClick: () -> Unit,
+    onLongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val cardShape = RoundedCornerShape(6.dp)
-    val coverShape = RoundedCornerShape(topStart = 6.dp, bottomStart = 6.dp)
+    val cardShape = RoundedCornerShape(12.dp)
+    val coverShape = RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp)
 
     Surface(
         modifier = modifier
             .height(56.dp)
             .clip(cardShape)
-            .clickable(onClick = onClick),
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         shape = cardShape
     ) {
@@ -443,8 +494,8 @@ private fun LikedSongsGridCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val cardShape = RoundedCornerShape(6.dp)
-    val coverShape = RoundedCornerShape(topStart = 6.dp, bottomStart = 6.dp)
+    val cardShape = RoundedCornerShape(12.dp)
+    val coverShape = RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp)
 
     Surface(
         modifier = modifier
@@ -496,8 +547,8 @@ private fun PlaylistGridCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val cardShape = RoundedCornerShape(6.dp)
-    val coverShape = RoundedCornerShape(topStart = 6.dp, bottomStart = 6.dp)
+    val cardShape = RoundedCornerShape(12.dp)
+    val coverShape = RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp)
     val coverUrl = playlist.thumbnailUrls.firstOrNull().orEmpty()
 
     Surface(
@@ -554,8 +605,8 @@ private fun ArtistGridCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val cardShape = RoundedCornerShape(6.dp)
-    val coverShape = RoundedCornerShape(topStart = 6.dp, bottomStart = 6.dp)
+    val cardShape = RoundedCornerShape(12.dp)
+    val coverShape = RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp)
 
     Surface(
         modifier = modifier
@@ -608,7 +659,8 @@ private fun ArtistGridCard(
 @Composable
 private fun HomeShelfSection(
     section: HomeSection,
-    onItemClick: (HomeShelfItem) -> Unit
+    onItemClick: (HomeShelfItem) -> Unit,
+    onSongLongClick: ((Track) -> Unit)? = null
 ) {
     val shelfItems = remember(section) {
         if (section.items.isNotEmpty()) {
@@ -635,7 +687,7 @@ private fun HomeShelfSection(
         Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp)) {
             val localizedSubtitle = when (section.subtitle?.trim()) {
                 "FATTO PER TE", "MADE FOR YOU", "CONÇU POUR VOUS", "HECHO PARA TI" -> stringResource(R.string.home_made_for_you_label)
-                "ASCOLTO OFFLINE" -> stringResource(R.string.library_downloads)
+                "ASCOLTO OFFLINE", "OFFLINE LISTENING", "ÉCOUTE HORS CONNEXION", "ESCUCHA SIN CONEXIÓN" -> stringResource(R.string.library_downloads)
                 else -> section.subtitle
             }
             if (!localizedSubtitle.isNullOrBlank()) {
@@ -687,26 +739,44 @@ private fun HomeShelfSection(
             ) { item ->
                 HomeShelfCard(
                     item = item,
-                    onClick = { onItemClick(item) }
+                    onClick = { onItemClick(item) },
+                    onSongLongClick = onSongLongClick
                 )
             }
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun HomeShelfCard(
     item: HomeShelfItem,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onSongLongClick: ((Track) -> Unit)? = null
 ) {
     val isArtist = item.type == HomeItemType.ARTIST
     val coverShape = if (isArtist) CircleShape else RoundedCornerShape(8.dp)
 
-    Column(
-        modifier = Modifier
+    val isSong = item.type == HomeItemType.SONG
+    val songTrack = item.track
+
+    val columnModifier = if (isSong && songTrack != null && onSongLongClick != null) {
+        Modifier
             .width(150.dp)
             .clip(RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick),
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = { onSongLongClick(songTrack) }
+            )
+    } else {
+        Modifier
+            .width(150.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
+    }
+
+    Column(
+        modifier = columnModifier,
         horizontalAlignment = if (isArtist) Alignment.CenterHorizontally else Alignment.Start
     ) {
         AsyncImage(
@@ -728,9 +798,13 @@ private fun HomeShelfCard(
         )
         Spacer(modifier = Modifier.height(2.dp))
         val displayedSubtitle = when {
-            item.subtitle == "Artista" -> stringResource(R.string.filter_artists)
-            item.subtitle.startsWith("Playlist • ") -> "${stringResource(R.string.filter_playlists)} • ${item.subtitle.removePrefix("Playlist • ")}"
-            item.subtitle.startsWith("Album • ") -> "${stringResource(R.string.filter_albums)} • ${item.subtitle.removePrefix("Album • ")}"
+            item.subtitle.equals("Artista", ignoreCase = true) ||
+            item.subtitle.equals("Artist", ignoreCase = true) ||
+            item.subtitle.equals("Artiste", ignoreCase = true) -> stringResource(R.string.filter_artists)
+            item.subtitle.startsWith("Playlist • ", ignoreCase = true) ||
+            item.subtitle.startsWith("Lista • ", ignoreCase = true) -> "${stringResource(R.string.filter_playlists)} • ${item.subtitle.substringAfter(" • ")}"
+            item.subtitle.startsWith("Album • ", ignoreCase = true) ||
+            item.subtitle.startsWith("Álbum • ", ignoreCase = true) -> "${stringResource(R.string.filter_albums)} • ${item.subtitle.substringAfter(" • ")}"
             else -> item.subtitle
         }
         Text(

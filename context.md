@@ -8,7 +8,7 @@
 
 - **Nome**: GMusic
 - **Natura**: Client Android nativo per lo streaming musicale da **YouTube Music** (**solo audio**, senza video).
-- **Esperienza Utente**: Interfaccia raffinata ispirata a Spotify, basata su **Material 3 (Material You)**, con palette dinamiche estratte dalla copertina in tempo reale, micro-interazioni fluide e navigazione edge-to-edge.
+- **Esperienza Utente**: Interfaccia raffinata 100% conforme a **Material Design 3 (Material You)**. Sistema di palette a due livelli: Dynamic Color nativo di sistema (`Monet`) per l'app generale e sub-theme scuro armonizzato dalla copertina per l'Expanded Player. Tipografia curata con **Poppins** (sans-serif geometrico per titoli e testi) e **JetBrains Mono** (monospaziato per timestamp di riproduzione, contatori ed elementi tecnici). Seek bar animata sinusoidale Pixel-style (`WavySlider`), micro-interazioni fluide e navigazione edge-to-edge.
 - **Lingua**: **100% Italiano** per tutte le stringhe utente, etichette, descrizioni e messaggi di errore (centralizzate in `res/values/strings.xml`).
 - **Modalità d'uso**:
   - **Ospite (Default)**: Funzionamento completamente autonomo e offline-first senza account Google (tramite NewPipeExtractor, InnerTube guest, e istanze Piped/Invidious).
@@ -24,7 +24,8 @@
 | **Linguaggio** | Kotlin 2.0.21 | Target JVM 17 |
 | **Build Tool** | Gradle 8.10.2 + AGP 8.7.2 | Version Catalog centralizzato in `gradle/libs.versions.toml` |
 | **Annotation Processing** | **KSP 2.0.21-1.0.28** | Nessun uso di `kapt` nel progetto |
-| **UI Framework** | Jetpack Compose BOM 2024.10.01 + Material 3 | Edge-to-edge con `WindowInsets`, animazioni `SharedTransitionLayout` |
+| **UI Framework** | Jetpack Compose BOM 2024.10.01 + Material 3 | Edge-to-edge, token M3 (`surfaceContainer*`), `SharedTransitionLayout` |
+| **Tipografia** | Poppins (Testi/Titoli) + JetBrains Mono (Timestamp/Dettagli) | Gestiti tramite Downloadable Fonts con `androidx.compose.ui:ui-text-google-fonts` |
 | **Dependency Injection** | Dagger Hilt 2.52 | `@HiltAndroidApp`, `@AndroidEntryPoint`, moduli in `di/` |
 | **Audio Engine** | AndroidX Media3 1.5.0 (`ExoPlayer`, `MediaSession`, `MediaLibraryService`) | Caching LRU 512 MB, `ResolvingDataSource` con schema custom `gmusic://` |
 | **Database Locale** | Room 2.6.1 + Coroutines/Flow | Tabelle: traccie, cronologia, playlist, cache stream, testi LRCLIB |
@@ -114,14 +115,19 @@ Quando ExoPlayer richiede la riproduzione di un brano con schema `gmusic://track
 - **Android Auto**:
   - Toccando un artista nell'albero multimediale di Android Auto, parte istantaneamente l'intera discografia dell'artista in riproduzione casuale (`shuffleModeEnabled = true`).
 
-### C. UI & Player Experience
+### C. UI & Player Experience (Material Design 3 / Material You)
 - **Single Activity Edge-to-Edge**: `MainActivity` imposta trasparenza totale su barre di stato e navigazione.
+- **Sistema a Doppio Livello di Tema**:
+  - **App Principale**: `dynamicDarkColorScheme()` / `dynamicLightColorScheme()` integrato col wallpaper di sistema (Android 12+), con superfici a contenitori tonali M3 (`surfaceContainerLow`, `surfaceContainer`, `surfaceContainerHigh`), abbandonando il nero assoluto.
+  - **Expanded Full-Screen Player**: Sub-`MaterialTheme` isolato, con ColorScheme Dark derivata dal seed color della cover via AndroidX Palette / HCT Tonal Mapping.
+- **WavySlider (Pixel-style)**:
+  - Seek bar a onda sinusoidale animata durante la riproduzione, con distensione fluida in linea retta in pausa e drag continuo.
+- **Tipografia Coerente**:
+  - `Poppins` (Bold/Medium) per titoli brano, artista e intestazioni;
+  - `JetBrains Mono` per timestamp temporali (`02:15 / 04:30`) e badge tecnici, eliminando lo sfarfallio di larghezza durante il playback.
 - **Transizione MiniPlayer -> FullScreen**:
-  - `MiniPlayerBar` ancorata sopra la barra a 4 tab con controlli rapidi e swipe gesture orizzontali (traccia precedente/successiva) e verso il basso (stop).
-  - Espansione in `FullScreenPlayerSheet` con animazione fluida container-transform / `SharedTransitionLayout`.
-- **Palette Adattiva**:
-  - `Palette` estrae i colori dominanti dalla copertina album, con correzione HSL per soddisfare sempre i requisiti di contrasto e leggibilità WCAG AA.
-  - I colori si animano armoniosamente tra i cambi traccia tramite `animateColorAsState`.
+  - `MiniPlayerBar` elevato M3 (`surfaceContainer`, raggio 16dp) ancorato sopra la `NavigationBar` a 4 tab con controlli rapidi e gesture di swipe.
+  - Espansione in `ExpandedPlayerScreen` con copertina a raggio 28dp (`extraLarge`), pulsante centrale `FilledIconButton` a cerchio (72dp) e pill chip M3 (`AssistChip`).
 - **Testi Karaoke**:
   - Query a LRCLIB (`get` o `search`) con cache Room. Visualizzazione riga per riga sincronizzata con scorrimento automatico e seeking al tocco.
 

@@ -36,7 +36,14 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
@@ -182,8 +189,93 @@ class OfflineDownloadController @Inject constructor(
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    private val _activeDownloadingTracks = MutableStateFlow<Map<String, Track>>(emptyMap())
+    val activeDownloadingTracks: StateFlow<Map<String, Track>> = _activeDownloadingTracks.asStateFlow()
+
+    private val _downloadProgress = MutableStateFlow<Map<String, Float>>(emptyMap())
+    val downloadProgress: StateFlow<Map<String, Float>> = _downloadProgress.asStateFlow()
+
+    private var progressPollingJob: Job? = null
+
+    init {
+        downloadManager.addListener(object : DownloadManager.Listener {
+            override fun onDownloadChanged(
+                manager: DownloadManager,
+                download: Download,
+                finalException: Exception?
+            ) {
+                val trackId = download.request.id
+                if (download.state == Download.STATE_COMPLETED || download.state == Download.STATE_FAILED) {
+                    _activeDownloadingTracks.update { it - trackId }
+                    _downloadProgress.update { it - trackId }
+                    if (_activeDownloadingTracks.value.isEmpty()) {
+                        progressPollingJob?.cancel()
+                        progressPollingJob = null
+                    }
+                }
+            }
+
+            override fun onDownloadRemoved(
+                manager: DownloadManager,
+                download: Download
+            ) {
+                val trackId = download.request.id
+                _activeDownloadingTracks.update { it - trackId }
+                _downloadProgress.update { it - trackId }
+                if (_activeDownloadingTracks.value.isEmpty()) {
+                    progressPollingJob?.cancel()
+                    progressPollingJob = null
+                }
+            }
+        })
+    }
+
+    private fun ensureProgressPolling() {
+        if (progressPollingJob?.isActive == true) return
+        progressPollingJob = scope.launch {
+            while (coroutineContext.isActive && _activeDownloadingTracks.value.isNotEmpty()) {
+                val currentDownloads = try {
+                    downloadManager.currentDownloads
+                } catch (_: Exception) {
+                    emptyList()
+                }
+
+                val updatedProgress = _downloadProgress.value.toMutableMap()
+                for ((id, _) in _activeDownloadingTracks.value) {
+                    val dl = currentDownloads.firstOrNull { it.request.id == id }
+                    if (dl != null) {
+                        if (dl.state == Download.STATE_COMPLETED) {
+                            _activeDownloadingTracks.update { it - id }
+                            updatedProgress.remove(id)
+                            continue
+                        } else if (dl.state == Download.STATE_FAILED) {
+                            _activeDownloadingTracks.update { it - id }
+                            updatedProgress.remove(id)
+                            continue
+                        }
+                        val pct = if (dl.percentDownloaded >= 0f) {
+                            (dl.percentDownloaded / 100f).coerceIn(0.08f, 0.99f)
+                        } else {
+                            ((updatedProgress[id] ?: 0.08f) + 0.03f).coerceAtMost(0.95f)
+                        }
+                        updatedProgress[id] = pct
+                    } else {
+                        val cur = updatedProgress[id] ?: 0.08f
+                        updatedProgress[id] = (cur + 0.02f).coerceAtMost(0.40f)
+                    }
+                }
+                _downloadProgress.value = updatedProgress
+                delay(400)
+            }
+        }
+    }
+
     fun downloadTrack(track: Track) {
         scope.launch {
+            _activeDownloadingTracks.update { it + (track.id to track) }
+            _downloadProgress.update { it + (track.id to 0.08f) }
+            ensureProgressPolling()
+
             dao.upsertTrackPreservingFlags(track)
             val uri = Uri.parse("${TrackMediaItemMapper.SCHEME_GMUSIC}://${TrackMediaItemMapper.HOST_TRACK}/${track.id}")
             val request = DownloadRequest.Builder(track.id, uri)
@@ -209,6 +301,24 @@ class OfflineDownloadController @Inject constructor(
         tracks.forEach { downloadTrack(it) }
     }
 
+    fun removeDownload(trackId: String) {
+        scope.launch {
+            try {
+                DownloadService.sendRemoveDownload(
+                    context,
+                    GMusicDownloadService::class.java,
+                    trackId,
+                    false
+                )
+            } catch (_: Exception) {
+                downloadManager.removeDownload(trackId)
+            }
+            dao.setTrackDownloaded(trackId, false)
+            _activeDownloadingTracks.update { it - trackId }
+            _downloadProgress.update { it - trackId }
+        }
+    }
+
     fun removeAllDownloads() {
         scope.launch {
             try {
@@ -221,6 +331,10 @@ class OfflineDownloadController @Inject constructor(
                 downloadManager.removeAllDownloads()
             }
             dao.clearAllDownloadedFlags()
+            _activeDownloadingTracks.value = emptyMap()
+            _downloadProgress.value = emptyMap()
+            progressPollingJob?.cancel()
+            progressPollingJob = null
         }
     }
 }

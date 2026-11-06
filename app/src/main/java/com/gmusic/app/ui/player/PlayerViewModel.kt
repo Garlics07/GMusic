@@ -85,6 +85,8 @@ class PlayerViewModel @Inject constructor(
     val localPlaylists: StateFlow<List<PlaylistSummary>> = musicRepository.observeActivePlaylists()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    val activeDownloads: StateFlow<Map<String, Float>> = offlineDownloadController.downloadProgress
+
     private var controllerFuture: ListenableFuture<MediaController>? = null
     private var mediaController: MediaController? = null
     private var likeObserverJob: Job? = null
@@ -376,6 +378,49 @@ class PlayerViewModel @Inject constructor(
             }
             if (tracks.isNotEmpty()) {
                 playTrack(tracks.first(), tracks)
+            }
+        }
+    }
+
+    fun playFromVideoId(videoId: String) {
+        viewModelScope.launch {
+            val initialTrack = withContext(Dispatchers.IO) {
+                musicRepository.resolveTrackById(videoId)
+            } ?: Track(
+                id = videoId,
+                title = "YouTube Music",
+                artistName = "...",
+                thumbnailUrl = "https://i.ytimg.com/vi/$videoId/hqdefault.jpg"
+            )
+            playTrack(initialTrack)
+            _uiState.update { it.copy(isFullScreenPlayerOpen = true) }
+
+            if (initialTrack.title == "YouTube Music" || initialTrack.artistName == "...") {
+                val resolved = withContext(Dispatchers.IO) {
+                    musicRepository.resolveTrackById(videoId)
+                }
+                if (resolved != null) {
+                    _uiState.update { current ->
+                        if (current.currentTrack?.id == videoId) {
+                            current.copy(currentTrack = resolved)
+                        } else current
+                    }
+                }
+            }
+        }
+    }
+
+    fun playFromPlaylistId(playlistId: String) {
+        viewModelScope.launch {
+            val detail = withContext(Dispatchers.IO) {
+                musicRepository.fetchAlbumOrPlaylistDetail(playlistId, "Playlist")
+            }
+            if (detail.tracks.isNotEmpty()) {
+                playTrack(
+                    track = detail.tracks.first(),
+                    queueContext = detail.tracks
+                )
+                _uiState.update { it.copy(isFullScreenPlayerOpen = true) }
             }
         }
     }

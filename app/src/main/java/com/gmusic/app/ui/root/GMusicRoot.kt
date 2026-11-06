@@ -6,13 +6,21 @@ import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Surface
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryMusic
@@ -34,6 +42,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -57,6 +66,9 @@ import com.gmusic.app.ui.explore.ExploreScreen
 import com.gmusic.app.ui.home.HomeScreen
 import com.gmusic.app.ui.library.DownloadedSongsScreen
 import com.gmusic.app.ui.library.HistoryScreen
+import com.gmusic.app.ui.library.LibraryAlbumsScreen
+import com.gmusic.app.ui.library.LibraryArtistsScreen
+import com.gmusic.app.ui.library.LibraryPlaylistsScreen
 import com.gmusic.app.ui.library.LibraryScreen
 import com.gmusic.app.ui.library.LikedSongsScreen
 import com.gmusic.app.ui.library.PlaylistDetailScreen
@@ -89,6 +101,7 @@ fun GMusicRoot(
     val currentRoute = navBackStackEntry?.destination?.route
     val playerState by playerViewModel.uiState.collectAsStateWithLifecycle()
     val localPlaylists by playerViewModel.localPlaylists.collectAsStateWithLifecycle()
+    val activeDownloads by playerViewModel.activeDownloads.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var showSettingsModal by remember { mutableStateOf(false) }
 
@@ -111,14 +124,11 @@ fun GMusicRoot(
         }
     }
 
-    val seedColor = if (playerState.adaptiveColorEnabled) playerState.adaptiveArtworkColor else null
-
-    GMusicTheme(seedPrimaryColor = seedColor) {
-        SharedTransitionLayout {
-            AnimatedContent(
-                targetState = playerState.isFullScreenPlayerOpen && playerState.currentTrack != null,
-                label = "playerContainerTransform"
-            ) { isFullPlayer ->
+    SharedTransitionLayout {
+        AnimatedContent(
+            targetState = playerState.isFullScreenPlayerOpen && playerState.currentTrack != null,
+            label = "playerContainerTransform"
+        ) { isFullPlayer ->
                 if (isFullPlayer) {
                     BackHandler {
                         playerViewModel.closeFullScreenPlayer()
@@ -144,6 +154,8 @@ fun GMusicRoot(
                         onAddCurrentToPlaylist = playerViewModel::addCurrentTrackToPlaylist,
                         onCreatePlaylistAndAddCurrent = playerViewModel::createPlaylistAndAddCurrent,
                         onDownloadCurrentTrack = playerViewModel::downloadCurrentTrack,
+                        isDownloadingCurrentTrack = playerState.currentTrack?.let { activeDownloads.containsKey(it.id) } == true,
+                        downloadProgressCurrentTrack = playerState.currentTrack?.let { activeDownloads[it.id] } ?: 0f,
                         sharedTransitionScope = this@SharedTransitionLayout,
                         animatedVisibilityScope = this@AnimatedContent
                     )
@@ -153,67 +165,12 @@ fun GMusicRoot(
                             modifier = Modifier.fillMaxSize(),
                             containerColor = MaterialTheme.colorScheme.background,
                             contentWindowInsets = WindowInsets(0, 0, 0, 0),
-                            snackbarHost = { SnackbarHost(snackbarHostState) },
-                            bottomBar = {
-                                Column(modifier = Modifier.fillMaxWidth()) {
-                                    if (playerState.currentTrack != null) {
-                                        MiniPlayerBar(
-                                            state = playerState,
-                                            onTogglePlayPause = playerViewModel::togglePlayPause,
-                                            onToggleLike = playerViewModel::toggleCurrentTrackLike,
-                                            onSkipNext = playerViewModel::skipNext,
-                                            onSkipPrevious = playerViewModel::skipPrevious,
-                                            onDismissStop = playerViewModel::stopAndDismiss,
-                                            onOpenFullPlayer = playerViewModel::openFullScreenPlayer,
-                                            sharedTransitionScope = this@SharedTransitionLayout,
-                                            animatedVisibilityScope = this@AnimatedContent
-                                        )
-                                    }
-                                    NavigationBar(
-                                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)
-                                    ) {
-                                        TopLevelDestination.entries.forEach { destination ->
-                                            val selected = currentRoute == destination.route
-                                            NavigationBarItem(
-                                                selected = selected,
-                                                alwaysShowLabel = true,
-                                                onClick = {
-                                                    if (destination == TopLevelDestination.LIBRARY) {
-                                                        // Se l'utente si trova su un sotto-schermo (artista, album, playlist, cronologia, preferiti), torna alla schermata iniziale di Libreria
-                                                        if (currentRoute != TopLevelDestination.LIBRARY.route) {
-                                                            val popped = navController.popBackStack(TopLevelDestination.LIBRARY.route, false)
-                                                            if (popped) return@NavigationBarItem
-                                                        }
-                                                    }
-                                                    navController.navigate(destination.route) {
-                                                        popUpTo(navController.graph.findStartDestination().id) {
-                                                            saveState = true
-                                                        }
-                                                        launchSingleTop = true
-                                                        restoreState = true
-                                                    }
-                                                },
-                                                icon = {
-                                                    Icon(
-                                                        imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
-                                                        contentDescription = stringResource(destination.labelRes)
-                                                    )
-                                                },
-                                                label = {
-                                                    Text(text = stringResource(destination.labelRes))
-                                                }
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        ) { innerPadding ->
+                            snackbarHost = { SnackbarHost(snackbarHostState) }
+                        ) { _ ->
                             NavHost(
                                 navController = navController,
                                 startDestination = TopLevelDestination.HOME.route,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(innerPadding)
+                                modifier = Modifier.fillMaxSize()
                             ) {
                                 composable(TopLevelDestination.HOME.route) {
                                     HomeScreen(
@@ -240,6 +197,9 @@ fun GMusicRoot(
                                 composable(TopLevelDestination.LIBRARY.route) {
                                     LibraryScreen(
                                         onOpenLikedSongs = { navController.navigate("liked_songs") },
+                                        onOpenPlaylists = { navController.navigate("library_playlists") },
+                                        onOpenArtists = { navController.navigate("library_artists") },
+                                        onOpenAlbums = { navController.navigate("library_albums") },
                                         onOpenDownloadedSongs = { navController.navigate("downloaded_songs") },
                                         onOpenPlaylist = { playlistId ->
                                             navController.navigate("playlist/${Uri.encode(playlistId)}")
@@ -248,6 +208,29 @@ fun GMusicRoot(
                                         onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
                                         onOpenArtist = navigateToArtist,
                                         onOpenHistory = { navController.navigate("history") },
+                                        modifier = Modifier.statusBarsPadding()
+                                    )
+                                }
+                                composable("library_playlists") {
+                                    LibraryPlaylistsScreen(
+                                        onBack = { navController.popBackStack() },
+                                        onOpenPlaylist = { playlistId ->
+                                            navController.navigate("playlist/${Uri.encode(playlistId)}")
+                                        },
+                                        modifier = Modifier.statusBarsPadding()
+                                    )
+                                }
+                                composable("library_artists") {
+                                    LibraryArtistsScreen(
+                                        onBack = { navController.popBackStack() },
+                                        onOpenArtist = navigateToArtist,
+                                        modifier = Modifier.statusBarsPadding()
+                                    )
+                                }
+                                composable("library_albums") {
+                                    LibraryAlbumsScreen(
+                                        onBack = { navController.popBackStack() },
+                                        onOpenAlbum = navigateToAlbum,
                                         modifier = Modifier.statusBarsPadding()
                                     )
                                 }
@@ -300,7 +283,8 @@ fun GMusicRoot(
                                     )
                                 ) { backStackEntry ->
                                     val albId = backStackEntry.arguments?.getString("albumId") ?: return@composable
-                                    val title = backStackEntry.arguments?.getString("title") ?: "Album"
+                                    val defaultAlbum = stringResource(R.string.filter_albums)
+                                    val title = backStackEntry.arguments?.getString("title")?.takeIf { it.isNotBlank() } ?: defaultAlbum
                                     AlbumScreen(
                                         albumId = albId,
                                         titleHint = title,
@@ -314,11 +298,12 @@ fun GMusicRoot(
                                     route = "artist/{artistId}?name={name}",
                                     arguments = listOf(
                                         navArgument("artistId") { type = NavType.StringType },
-                                        navArgument("name") { type = NavType.StringType; defaultValue = "Artista" }
+                                        navArgument("name") { type = NavType.StringType; defaultValue = "" }
                                     )
                                 ) { backStackEntry ->
                                     val artId = backStackEntry.arguments?.getString("artistId") ?: return@composable
-                                    val name = backStackEntry.arguments?.getString("name") ?: "Artista"
+                                    val defaultArtist = stringResource(R.string.filter_artists)
+                                    val name = backStackEntry.arguments?.getString("name")?.takeIf { it.isNotBlank() } ?: defaultArtist
                                     ArtistScreen(
                                         artistId = artId,
                                         nameHint = name,
@@ -357,6 +342,75 @@ fun GMusicRoot(
                             }
                         }
 
+                        // Floating Player + Floating Pill Navigation Bar
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .align(Alignment.BottomCenter)
+                                .navigationBarsPadding()
+                                .background(Color.Transparent)
+                        ) {
+                            if (playerState.currentTrack != null) {
+                                MiniPlayerBar(
+                                    state = playerState,
+                                    onTogglePlayPause = playerViewModel::togglePlayPause,
+                                    onToggleLike = playerViewModel::toggleCurrentTrackLike,
+                                    onSkipNext = playerViewModel::skipNext,
+                                    onSkipPrevious = playerViewModel::skipPrevious,
+                                    onDismissStop = playerViewModel::stopAndDismiss,
+                                    onOpenFullPlayer = playerViewModel::openFullScreenPlayer,
+                                    sharedTransitionScope = this@SharedTransitionLayout,
+                                    animatedVisibilityScope = this@AnimatedContent
+                                )
+                            }
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 20.dp, vertical = 6.dp)
+                                    .height(62.dp),
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.surfaceContainer,
+                                tonalElevation = 6.dp,
+                                shadowElevation = 8.dp
+                            ) {
+                                NavigationBar(
+                                    containerColor = Color.Transparent,
+                                    modifier = Modifier.fillMaxSize(),
+                                    windowInsets = WindowInsets(0, 0, 0, 0)
+                                ) {
+                                    TopLevelDestination.entries.forEach { destination ->
+                                        val selected = currentRoute == destination.route
+                                        NavigationBarItem(
+                                            selected = selected,
+                                            alwaysShowLabel = true,
+                                            onClick = {
+                                                // Torna istantaneamente alla pagina base della tab, chiudendo qualsiasi sotto-schermo
+                                                navController.navigate(destination.route) {
+                                                    popUpTo(navController.graph.id) {
+                                                        inclusive = false
+                                                    }
+                                                    launchSingleTop = true
+                                                }
+                                            },
+                                            icon = {
+                                                Icon(
+                                                    imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
+                                                    contentDescription = stringResource(destination.labelRes),
+                                                    modifier = Modifier.size(22.dp)
+                                                )
+                                            },
+                                            label = {
+                                                Text(
+                                                    text = stringResource(destination.labelRes),
+                                                    style = MaterialTheme.typography.labelSmall
+                                                )
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
                         if (showSettingsModal) {
                             SettingsModalBottomSheet(
                                 onDismiss = { showSettingsModal = false },
@@ -371,4 +425,3 @@ fun GMusicRoot(
             }
         }
     }
-}

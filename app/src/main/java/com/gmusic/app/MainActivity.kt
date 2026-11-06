@@ -57,6 +57,25 @@ class MainActivity : ComponentActivity() {
             return
         }
 
+        if (intent.action == Intent.ACTION_VIEW) {
+            val uri = intent.data
+            if (uri != null) {
+                handleDeepLinkUri(uri)
+                return
+            }
+        }
+
+        if (intent.action == Intent.ACTION_SEND && intent.type?.startsWith("text/") == true) {
+            val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT)
+            if (!sharedText.isNullOrBlank()) {
+                val urlMatch = Regex("https?://[^\\s]+").find(sharedText)?.value
+                if (urlMatch != null) {
+                    handleDeepLinkUri(android.net.Uri.parse(urlMatch))
+                    return
+                }
+            }
+        }
+
         val videoId = intent.getStringExtra("debug_play_id") ?: return
         val title = intent.getStringExtra("debug_play_title") ?: "Test Audio"
         val artist = intent.getStringExtra("debug_play_artist") ?: "Artista"
@@ -67,6 +86,38 @@ class MainActivity : ComponentActivity() {
             thumbnailUrl = "https://i.ytimg.com/vi/$videoId/hqdefault.jpg"
         )
         playerViewModel.playTrack(track)
+    }
+
+    private fun handleDeepLinkUri(uri: android.net.Uri) {
+        val host = uri.host?.lowercase() ?: return
+        val path = uri.path ?: ""
+
+        when {
+            host == "youtu.be" -> {
+                val videoId = uri.lastPathSegment?.trim()
+                if (!videoId.isNullOrBlank()) {
+                    playerViewModel.playFromVideoId(videoId)
+                }
+            }
+            host.contains("youtube.com") -> {
+                if (path.startsWith("/watch")) {
+                    val videoId = uri.getQueryParameter("v")
+                    if (!videoId.isNullOrBlank()) {
+                        playerViewModel.playFromVideoId(videoId)
+                    }
+                } else if (path.startsWith("/playlist")) {
+                    val playlistId = uri.getQueryParameter("list")
+                    if (!playlistId.isNullOrBlank()) {
+                        playerViewModel.playFromPlaylistId(playlistId)
+                    }
+                } else if (path.startsWith("/channel")) {
+                    val channelId = uri.lastPathSegment
+                    if (!channelId.isNullOrBlank()) {
+                        playerViewModel.playFromSearchQuery(channelId)
+                    }
+                }
+            }
+        }
     }
 }
 

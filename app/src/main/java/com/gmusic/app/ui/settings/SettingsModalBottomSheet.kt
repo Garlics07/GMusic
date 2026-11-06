@@ -97,11 +97,11 @@ enum class SettingsSubSection(
 @Composable
 private fun getSubSectionSubtitle(sub: SettingsSubSection, settings: com.gmusic.app.data.local.UserSettings, cacheSizeMb: Long): String {
     return when (sub) {
-        SettingsSubSection.THEME -> stringResource(R.string.settings_adaptive_player)
+        SettingsSubSection.THEME -> stringResource(R.string.settings_theme_dynamic_title)
         SettingsSubSection.AUDIO_QUALITY -> if (settings.highAudioQuality) stringResource(R.string.settings_quality_high) else stringResource(R.string.settings_quality_auto)
-        SettingsSubSection.EQUALIZER -> if (settings.eqEnabled) "ON (${settings.eqPresetId})" else "OFF"
+        SettingsSubSection.EQUALIZER -> if (settings.eqEnabled) "${stringResource(R.string.state_on)} (${settings.eqPresetId})" else stringResource(R.string.state_off)
         SettingsSubSection.CACHE -> "${cacheSizeMb} MB"
-        SettingsSubSection.INFO -> "v2.7.0"
+        SettingsSubSection.INFO -> "v${com.gmusic.app.BuildConfig.VERSION_NAME}"
     }
 }
 
@@ -125,44 +125,9 @@ fun SettingsModalBottomSheet(
     val effectiveAvatar = accountAvatarUrl ?: accountAvatarFromVm
 
     var currentSection by remember(initialSubSection) { mutableStateOf<SettingsSubSection?>(initialSubSection) }
-    var showCookieDialog by remember { mutableStateOf(false) }
-    var cookieInput by remember { mutableStateOf("") }
     var showInstancesDialog by remember { mutableStateOf(false) }
     var pipedInput by remember(settings.pipedInstancesCsv) { mutableStateOf(settings.pipedInstancesCsv) }
     var invidiousInput by remember(settings.invidiousInstancesCsv) { mutableStateOf(settings.invidiousInstancesCsv) }
-
-    if (showCookieDialog) {
-        AlertDialog(
-            onDismissRequest = { showCookieDialog = false },
-            title = { Text(stringResource(R.string.settings_paste_cookie)) },
-            text = {
-                OutlinedTextField(
-                    value = cookieInput,
-                    onValueChange = { cookieInput = it },
-                    placeholder = { Text("SAPISID=...; __Secure-3PAPISID=...") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (cookieInput.isNotBlank()) {
-                            viewModel.saveManualCookie(cookieInput)
-                            cookieInput = ""
-                            showCookieDialog = false
-                        }
-                    }
-                ) {
-                    Text(stringResource(R.string.action_confirm))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showCookieDialog = false }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
-            }
-        )
-    }
 
     if (showInstancesDialog) {
         AlertDialog(
@@ -173,13 +138,13 @@ fun SettingsModalBottomSheet(
                     OutlinedTextField(
                         value = pipedInput,
                         onValueChange = { pipedInput = it },
-                        label = { Text("Piped (CSV)") },
+                        label = { Text(stringResource(R.string.settings_instances_piped_csv)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
                         value = invidiousInput,
                         onValueChange = { invidiousInput = it },
-                        label = { Text("Invidious (CSV)") },
+                        label = { Text(stringResource(R.string.settings_instances_invidious_csv)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -345,7 +310,7 @@ fun SettingsModalBottomSheet(
                                             }
                                             Spacer(modifier = Modifier.width(12.dp))
                                             Text(
-                                                text = accountName ?: "Account Google",
+                                                text = accountName ?: stringResource(R.string.settings_google_account),
                                                 style = MaterialTheme.typography.titleMedium,
                                                 fontWeight = FontWeight.Bold,
                                                 color = MaterialTheme.colorScheme.onSurface,
@@ -385,7 +350,7 @@ fun SettingsModalBottomSheet(
                                             }
                                             Spacer(modifier = Modifier.width(12.dp))
                                             Text(
-                                                text = "Account Google",
+                                                text = stringResource(R.string.settings_google_account),
                                                 style = MaterialTheme.typography.titleMedium,
                                                 fontWeight = FontWeight.Bold,
                                                 color = MaterialTheme.colorScheme.onSurface
@@ -458,17 +423,6 @@ fun SettingsModalBottomSheet(
                                 }
                             }
                         }
-
-                        item(key = "cookie_fallback") {
-                            if (!isLoggedIn) {
-                                TextButton(
-                                    onClick = { showCookieDialog = true },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(stringResource(R.string.settings_paste_cookie))
-                                }
-                            }
-                        }
                     }
                 } else {
                     // Contenuto dinamico della sottosezione selezionata
@@ -477,38 +431,41 @@ fun SettingsModalBottomSheet(
                             LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                                 item {
                                     Card(
-                                        shape = RoundedCornerShape(14.dp),
+                                        shape = RoundedCornerShape(16.dp),
                                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
                                     ) {
-                                        Row(
+                                        Column(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(16.dp),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
+                                                .padding(18.dp)
                                         ) {
-                                            Column(modifier = Modifier.weight(1f)) {
-                                                Text(
-                                                    text = stringResource(R.string.settings_adaptive_player),
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    fontWeight = FontWeight.SemiBold
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Palette,
+                                                    contentDescription = null,
+                                                    tint = MaterialTheme.colorScheme.primary,
+                                                    modifier = Modifier.size(24.dp)
                                                 )
+                                                Spacer(modifier = Modifier.width(12.dp))
                                                 Text(
-                                                    text = "Tinta dinamica sincronizzata con la copertina del brano in riproduzione",
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    text = stringResource(R.string.settings_theme_dynamic_title),
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.onSurface
                                                 )
                                             }
-                                            Switch(
-                                                checked = settings.adaptivePlayerColor,
-                                                onCheckedChange = viewModel::setAdaptivePlayerColor
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text(
+                                                text = stringResource(R.string.settings_theme_dynamic_desc),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
                                         }
                                     }
                                 }
                                 item {
                                     Card(
-                                        shape = RoundedCornerShape(14.dp),
+                                        shape = RoundedCornerShape(16.dp),
                                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
                                     ) {
                                         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
@@ -560,7 +517,7 @@ fun SettingsModalBottomSheet(
                                                     fontWeight = FontWeight.SemiBold
                                                 )
                                                 Text(
-                                                    text = "Opus itag 251 (160 kbps) preferito con fallback AAC itag 140. Nessun video decodificato (Audio Only rigoroso).",
+                                                    text = stringResource(R.string.settings_quality_high_desc),
                                                     style = MaterialTheme.typography.bodySmall,
                                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
@@ -611,7 +568,7 @@ fun SettingsModalBottomSheet(
                                 if (settings.eqEnabled) {
                                     item {
                                         Text(
-                                            text = "Preset",
+                                            text = stringResource(R.string.settings_eq_presets),
                                             style = MaterialTheme.typography.titleSmall,
                                             color = MaterialTheme.colorScheme.primary
                                         )
@@ -621,7 +578,7 @@ fun SettingsModalBottomSheet(
                                                 FilterChip(
                                                     selected = settings.eqPresetId == preset.id,
                                                     onClick = { viewModel.selectEqPreset(preset) },
-                                                    label = { Text(preset.labelIt) }
+                                                    label = { Text(stringResource(preset.nameRes)) }
                                                 )
                                             }
                                         }
@@ -638,7 +595,7 @@ fun SettingsModalBottomSheet(
                                                         modifier = Modifier.fillMaxWidth(),
                                                         horizontalArrangement = Arrangement.SpaceBetween
                                                     ) {
-                                                        Text(text = "Bass Boost", style = MaterialTheme.typography.titleSmall)
+                                                        Text(text = stringResource(R.string.settings_bass_boost), style = MaterialTheme.typography.titleSmall)
                                                         Text(text = "${settings.bassBoostPercent}%", style = MaterialTheme.typography.bodySmall)
                                                     }
                                                     Slider(
@@ -662,7 +619,7 @@ fun SettingsModalBottomSheet(
                                                         modifier = Modifier.fillMaxWidth(),
                                                         horizontalArrangement = Arrangement.SpaceBetween
                                                     ) {
-                                                        Text(text = "Virtualizzatore surround", style = MaterialTheme.typography.titleSmall)
+                                                        Text(text = stringResource(R.string.settings_virtualizer), style = MaterialTheme.typography.titleSmall)
                                                         Text(text = "${settings.virtualizerPercent}%", style = MaterialTheme.typography.bodySmall)
                                                     }
                                                     Slider(
@@ -676,7 +633,7 @@ fun SettingsModalBottomSheet(
                                     }
 
                                     item {
-                                        Text(text = "Bande di frequenza", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                                        Text(text = stringResource(R.string.settings_frequency_bands), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                                     }
 
                                     items(BAND_LABELS.indices.toList()) { index ->
@@ -715,19 +672,19 @@ fun SettingsModalBottomSheet(
                                     ) {
                                         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                                             Text(
-                                                text = "Spazio utilizzato",
+                                                text = stringResource(R.string.settings_storage_used),
                                                 style = MaterialTheme.typography.titleMedium,
                                                 fontWeight = FontWeight.SemiBold
                                             )
                                             Spacer(modifier = Modifier.height(4.dp))
                                             Text(
-                                                text = "${cacheSizeMb} MB utilizzati",
+                                                text = stringResource(R.string.settings_cache_used_format, cacheSizeMb),
                                                 style = MaterialTheme.typography.bodyLarge,
                                                 color = MaterialTheme.colorScheme.primary,
                                                 fontWeight = FontWeight.Bold
                                             )
                                             Text(
-                                                text = "Include i file audio memorizzati nella cache LRU di riproduzione temporanea.",
+                                                text = stringResource(R.string.settings_cache_desc),
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -749,7 +706,7 @@ fun SettingsModalBottomSheet(
                                         onClick = viewModel::deleteAllDownloads,
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        Text("Elimina tutti i brani scaricati offline")
+                                        Text(stringResource(R.string.settings_delete_downloads))
                                     }
                                 }
                             }
@@ -781,14 +738,14 @@ fun SettingsModalBottomSheet(
                                                 color = MaterialTheme.colorScheme.primary
                                             )
                                             Text(
-                                                text = "Versione 2.7.0 (Build 20261105)",
+                                                text = stringResource(R.string.settings_version_format, com.gmusic.app.BuildConfig.VERSION_NAME),
                                                 style = MaterialTheme.typography.labelLarge,
                                                 fontWeight = FontWeight.Medium,
                                                 color = MaterialTheme.colorScheme.onSurface
                                             )
                                             Spacer(modifier = Modifier.height(6.dp))
                                             Text(
-                                                text = "Audio Only Streaming Client • YouTube Music Backend",
+                                                text = stringResource(R.string.settings_app_subtitle),
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -798,7 +755,7 @@ fun SettingsModalBottomSheet(
 
                                 item {
                                     Text(
-                                        text = "Cronologia aggiornamenti di sviluppo",
+                                        text = stringResource(R.string.settings_changelog_title),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
@@ -811,9 +768,57 @@ fun SettingsModalBottomSheet(
                                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                                     ) {
                                         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                            Text(text = "v2.7.0 (Attuale)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                            Text(text = stringResource(R.string.settings_changelog_v289_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                                             Text(
-                                                text = "• Supporto multilingua nativo a 4 lingue (Italiano, English, Français, Español) basato su impostazioni di sistema\n• Traduzione dinamica automatica di tutte le sezioni e scaffali della Home\n• Tracciamento e sincronizzazione cronologia bidirezionale ufficiale YouTube Music\n• Header account Google snellito con immagine profilo e nome utente a sinistra, e disconnessione rapida a destra",
+                                                text = stringResource(R.string.settings_changelog_v289_desc),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+
+                                item {
+                                    Card(
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                                    ) {
+                                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Text(text = stringResource(R.string.settings_changelog_v285_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                            Text(
+                                                text = stringResource(R.string.settings_changelog_v285_desc),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+
+                                item {
+                                    Card(
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                                    ) {
+                                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Text(text = stringResource(R.string.settings_changelog_v280_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                            Text(
+                                                text = stringResource(R.string.settings_changelog_v280_desc),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+
+                                item {
+                                    Card(
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                                    ) {
+                                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Text(text = "v2.7.0", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                            Text(
+                                                text = stringResource(R.string.settings_changelog_v270_desc),
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -829,7 +834,7 @@ fun SettingsModalBottomSheet(
                                         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                             Text(text = "v2.6.0", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                                             Text(
-                                                text = "• Nuovo logo ufficiale su mobile, Android Auto, widget e interfaccia\n• Pulsante '+' compatto per creare nuove playlist (senza testo)\n• Sezione 'Canzoni scaricate' sotto Canzoni preferite con riproduzione e casuale\n• Playlist: rimozione frecce e drag, eliminazione brani nei 3 puntini, tasti Casuale e Scarica playlist\n• Modal impostazioni centrato su schermo con margini e limiti verticali",
+                                                text = stringResource(R.string.settings_changelog_v260_desc),
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -845,7 +850,7 @@ fun SettingsModalBottomSheet(
                                         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                             Text(text = "v2.5.0", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                                             Text(
-                                                text = "• Sincronizzazione ascolti YouTube Music in tempo reale (watchtime)\n• Gestione completa playlist (creazione, aggiunta e rimozione brani su YT e locale)\n• Cronologia ascolti integrata in Libreria\n• Pagina artista essenziale (solo Riproduci Casuale e Artista Preferito)\n• Filtri di ricerca dinamici (visibili solo con query attiva)\n• Classifiche ufficiali Top 100 YouTube Music Italia\n• Impostazioni in Modal Popup interattivo",
+                                                text = stringResource(R.string.settings_changelog_v250_desc),
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -861,7 +866,7 @@ fun SettingsModalBottomSheet(
                                         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                             Text(text = "v2.4.0", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                                             Text(
-                                                text = "• Album in sole versioni audio ufficiali (ATV, no videoclip OMV/UGC)\n• Copertine HD 1:1 originali per tutti i brani degli album\n• Radio istantanea per artisti su Android Auto\n• Icona a cuore per Libreria su Android Auto e pulizia descrizioni futili\n• Status bar insets su tutti i sotto-schermi",
+                                                text = stringResource(R.string.settings_changelog_v240_desc),
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -877,7 +882,7 @@ fun SettingsModalBottomSheet(
                                         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                             Text(text = "v2.3.0", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                                             Text(
-                                                text = "• Rework interfaccia Home stile Spotify (griglia 2x3 'Riproduzioni recenti')\n• Gradiente dinamico con Palette animato\n• Caroselli infiniti paged senza blocchi UI",
+                                                text = stringResource(R.string.settings_changelog_v230_desc),
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -893,7 +898,7 @@ fun SettingsModalBottomSheet(
                                         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                             Text(text = "v2.0.0", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                                             Text(
-                                                text = "• Riscrittura completa da zero dell'applicazione\n• Jetpack Compose Material 3, Media3 ExoPlayer e Android Auto\n• Risolutore resiliente Opus 251 / AAC 140 con NewPipeExtractor",
+                                                text = stringResource(R.string.settings_changelog_v200_desc),
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )

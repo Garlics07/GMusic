@@ -15,8 +15,8 @@ android {
         applicationId = "com.gmusic.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 27
-        versionName = "2.7.0"
+        versionCode = 31
+        versionName = "2.8.9"
 
         vectorDrawables {
             useSupportLibrary = true
@@ -79,6 +79,7 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui.text.google.fonts)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.extended)

@@ -4,51 +4,117 @@ import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.googlefonts.Font
+import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.unit.sp
+import com.gmusic.app.R
 
+// Provider ufficiale Google Fonts tramite Google Play Services
+private val googleFontProvider = GoogleFont.Provider(
+    providerAuthority = "com.google.android.gms.fonts",
+    providerPackage = "com.google.android.gms",
+    certificates = R.array.com_google_android_gms_fonts_certs
+)
+
+// 1. Font Family Principale: Poppins
+private val poppinsFont = GoogleFont("Poppins")
+val PoppinsFamily = FontFamily(
+    Font(googleFont = poppinsFont, fontProvider = googleFontProvider, weight = FontWeight.Normal),
+    Font(googleFont = poppinsFont, fontProvider = googleFontProvider, weight = FontWeight.Medium),
+    Font(googleFont = poppinsFont, fontProvider = googleFontProvider, weight = FontWeight.SemiBold),
+    Font(googleFont = poppinsFont, fontProvider = googleFontProvider, weight = FontWeight.Bold),
+    Font(googleFont = poppinsFont, fontProvider = googleFontProvider, weight = FontWeight.ExtraBold)
+)
+
+// 2. Font Family Monospaziata: JetBrains Mono (per timestamp, bitrate e codici)
+private val jetBrainsMonoFont = GoogleFont("JetBrains Mono")
+val JetBrainsMonoFamily = FontFamily(
+    Font(googleFont = jetBrainsMonoFont, fontProvider = googleFontProvider, weight = FontWeight.Normal),
+    Font(googleFont = jetBrainsMonoFont, fontProvider = googleFontProvider, weight = FontWeight.Medium),
+    Font(googleFont = jetBrainsMonoFont, fontProvider = googleFontProvider, weight = FontWeight.Bold)
+)
+
+// Tipografia M3 ufficiale dell'app
 val GMusicTypography = Typography(
     headlineLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
+        fontFamily = PoppinsFamily,
         fontWeight = FontWeight.ExtraBold,
-        fontSize = 30.sp,
-        lineHeight = 36.sp,
+        fontSize = 32.sp,
+        lineHeight = 38.sp,
         letterSpacing = (-0.5).sp
     ),
     headlineMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
+        fontFamily = PoppinsFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 24.sp,
-        lineHeight = 30.sp,
+        fontSize = 26.sp,
+        lineHeight = 32.sp,
         letterSpacing = (-0.3).sp
     ),
+    headlineSmall = TextStyle(
+        fontFamily = PoppinsFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 22.sp,
+        lineHeight = 28.sp
+    ),
     titleLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
+        fontFamily = PoppinsFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 20.sp,
         lineHeight = 26.sp
     ),
     titleMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
+        fontFamily = PoppinsFamily,
         fontWeight = FontWeight.SemiBold,
         fontSize = 16.sp,
-        lineHeight = 22.sp
+        lineHeight = 22.sp,
+        letterSpacing = 0.15.sp
     ),
-    bodyLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 22.sp
-    ),
-    bodyMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Normal,
+    titleSmall = TextStyle(
+        fontFamily = PoppinsFamily,
+        fontWeight = FontWeight.Medium,
         fontSize = 14.sp,
         lineHeight = 20.sp
     ),
-    labelMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Medium,
+    bodyLarge = TextStyle(
+        fontFamily = PoppinsFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
+        letterSpacing = 0.5.sp
+    ),
+    bodyMedium = TextStyle(
+        fontFamily = PoppinsFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.25.sp
+    ),
+    bodySmall = TextStyle(
+        fontFamily = PoppinsFamily,
+        fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
         lineHeight = 16.sp
+    ),
+    labelLarge = TextStyle(
+        fontFamily = PoppinsFamily,
+        fontWeight = FontWeight.Medium,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.1.sp
+    ),
+    // Timestamp Player, Indici e Specifiche Tecniche -> JetBrains Mono
+    labelMedium = TextStyle(
+        fontFamily = JetBrainsMonoFamily,
+        fontWeight = FontWeight.Medium,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.5.sp
+    ),
+    labelSmall = TextStyle(
+        fontFamily = JetBrainsMonoFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 10.sp,
+        lineHeight = 14.sp,
+        letterSpacing = 0.5.sp
     )
 )

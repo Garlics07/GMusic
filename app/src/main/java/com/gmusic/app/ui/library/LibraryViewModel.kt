@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -45,8 +46,17 @@ class LibraryViewModel @Inject constructor(
     val savedArtists: StateFlow<List<ArtistSummary>> = musicRepository.observeSavedArtists()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    val downloadedTracks: StateFlow<List<Track>> = musicRepository.observeDownloadedTracks()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val downloadProgress: StateFlow<Map<String, Float>> = downloadController.downloadProgress
+
+    val downloadedTracks: StateFlow<List<Track>> = combine(
+        musicRepository.observeDownloadedTracks(),
+        downloadController.activeDownloadingTracks
+    ) { dbDownloaded, activeDownloading ->
+        val activeList = activeDownloading.values.filter { active ->
+            dbDownloaded.none { it.id == active.id }
+        }
+        activeList + dbDownloaded
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val historyTracks: StateFlow<List<Track>> = musicRepository.observeRecentHistory(100)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -130,6 +140,14 @@ class LibraryViewModel @Inject constructor(
             val id = musicRepository.createPlaylist(title)
             musicRepository.addTrackToPlaylist(id, track)
         }
+    }
+
+    fun downloadTrack(track: Track) {
+        downloadController.downloadTrack(track)
+    }
+
+    fun removeDownload(track: Track) {
+        downloadController.removeDownload(track.id)
     }
 
     fun downloadTracks(tracks: List<Track>) {

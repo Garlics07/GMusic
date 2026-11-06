@@ -31,6 +31,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.ResolvingDataSource
 import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.cache.CacheWriter
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
@@ -79,6 +80,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.guava.future
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -104,6 +106,7 @@ class GMusicMediaLibraryService : MediaLibraryService() {
     private var mediaLibrarySession: MediaLibrarySession? = null
     private var crossfadeController: CrossfadeController? = null
     private var currentLikeWatchJob: Job? = null
+    private var preCacheJob: Job? = null
 
     @Volatile private var currentCrossfadeSeconds: Int = 0
     @Volatile private var isFetchingAutoplay: Boolean = false
@@ -143,6 +146,7 @@ class GMusicMediaLibraryService : MediaLibraryService() {
             }
         }
     }
+
 
     override fun onCreate() {
         super.onCreate()
@@ -231,6 +235,7 @@ class GMusicMediaLibraryService : MediaLibraryService() {
             }
         }
     }
+
 
     private fun buildExoPlayer(): ExoPlayer {
         val okHttpFactory = OkHttpDataSource.Factory(okHttpClient)
@@ -334,12 +339,11 @@ class GMusicMediaLibraryService : MediaLibraryService() {
 
                 observeCurrentTrackLike(currentTrack.id)
 
-                val nextIndex = player.nextMediaItemIndex
-                if (nextIndex != C.INDEX_UNSET && nextIndex < player.mediaItemCount) {
-                    val nextMediaId = player.getMediaItemAt(nextIndex).mediaId
-                    serviceScope.launch(Dispatchers.IO) {
-                        streamResolver.preResolve(nextMediaId)
-                    }
+                // Pre-caching proattivo di 3 brani in totale (brano attuale + i 2 successivi)
+                // per prevenire silenzi o interruzioni in galleria / assenza temporanea di segnale
+                preCacheJob?.cancel()
+                preCacheJob = serviceScope.launch(Dispatchers.IO) {
+                    preCacheNextTracks()
                 }
 
                 val remainingInQueue = (player.mediaItemCount - 1 - player.currentMediaItemIndex).coerceAtLeast(0)
@@ -432,6 +436,7 @@ class GMusicMediaLibraryService : MediaLibraryService() {
             }
         }
     }
+
 
     private fun syncWidgetAndCustomLayout() {
         val currentItem = player.currentMediaItem
@@ -687,6 +692,7 @@ class GMusicMediaLibraryService : MediaLibraryService() {
         }
     }
 
+
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? =
         mediaLibrarySession
 
@@ -762,6 +768,7 @@ class GMusicMediaLibraryService : MediaLibraryService() {
                 .setMediaMetadata(
                     MediaMetadata.Builder()
                         .setTitle(getString(R.string.app_name))
+                        .setArtworkUri(resourceUri(R.drawable.ic_aa_logo))
                         .setIsBrowsable(true)
                         .setIsPlayable(false)
                         .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
@@ -1324,6 +1331,7 @@ class GMusicMediaLibraryService : MediaLibraryService() {
         }
     }
 
+
     /**
      * Costruisce gli elementi del tab Home di Android Auto raggruppati con CONTENT_STYLE_GROUP_TITLE_HINT
      * nello stesso ordine degli scaffali del telefono ("Riproduzioni recenti", "Fatto per te", "Consigliati per te",
@@ -1513,6 +1521,7 @@ class GMusicMediaLibraryService : MediaLibraryService() {
             }
         }
     }
+
 
     private suspend fun buildAndroidAutoSearchTabItems(): List<MediaItem> = withContext(Dispatchers.IO) {
         val (charts, _, moods) = musicRepository.loadExploreItalyData()
@@ -1747,6 +1756,67 @@ class GMusicMediaLibraryService : MediaLibraryService() {
             .authority(packageName)
             .appendPath(resId.toString())
             .build()
+
+    private suspend fun preCacheNextTracks() = withContext(Dispatchers.IO) {
+        val currentIndex = withContext(Dispatchers.Main) { player.currentMediaItemIndex }
+        val totalCount = withContext(Dispatchers.Main) { player.mediaItemCount }
+        if (currentIndex == C.INDEX_UNSET || totalCount <= 1) return@withContext
+
+        val targetIndices = listOf(currentIndex + 1, currentIndex + 2)
+            .filter { it in 0 until totalCount }
+
+        for (idx in targetIndices) {
+            if (!coroutineContext.isActive) break
+            val mediaId = withContext(Dispatchers.Main) {
+                if (idx < player.mediaItemCount) player.getMediaItemAt(idx).mediaId else null
+            } ?: continue
+
+            try {
+                // 1. Risolvi preventivamente l'URL audio salvandolo in cache Room e memoria
+                val resolvedUrl = streamResolver.resolveStreamUrl(mediaId, forceRefresh = false)
+                if (resolvedUrl.isBlank() || !coroutineContext.isActive) continue
+
+                // 2. Pre-scarica l'audio nel SimpleCache in modo che sia disponibile in galleria/offline
+                val okHttpFactory = OkHttpDataSource.Factory(okHttpClient)
+                val cacheDataSource = CacheDataSource.Factory()
+                    .setCache(simpleCache)
+                    .setUpstreamDataSourceFactory(okHttpFactory)
+                    .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+                    .createDataSource()
+
+                val ua = when {
+                    resolvedUrl.contains("c=IOS", ignoreCase = true) ->
+                        "com.google.ios.youtube/20.03.02 (iPhone16,2; U; CPU iOS 18_2_1 like Mac OS X;)"
+                    resolvedUrl.contains("c=ANDROID_VR", ignoreCase = true) ->
+                        "com.google.android.apps.youtube.vr.oculus/1.62.27 (Linux; U; Android 12L; eureka-user Build/SQ3A.220605.009.A1) gzip"
+                    resolvedUrl.contains("c=ANDROID", ignoreCase = true) ->
+                        "com.google.android.youtube/19.45.38 (Linux; U; Android 14) gzip"
+                    else ->
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0"
+                }
+
+                val dataSpec = DataSpec.Builder()
+                    .setUri(Uri.parse(resolvedUrl))
+                    .setHttpRequestHeaders(mapOf("User-Agent" to ua))
+                    .setKey(mediaId)
+                    .setLength(8L * 1024L * 1024L)
+                    .build()
+
+                val writer = CacheWriter(
+                    cacheDataSource,
+                    dataSpec,
+                    ByteArray(64 * 1024),
+                    null
+                )
+                Log.d(TAG, "Pre-caching audio avviato per [idx=$idx, id=$mediaId]")
+                writer.cache()
+                Log.i(TAG, "Pre-caching audio completato con successo per $mediaId")
+            } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
+                Log.w(TAG, "Pre-caching parziale o fallito per $mediaId: ${e.message}")
+            }
+        }
+    }
 
     companion object {
         private const val TAG = "GMusicAudio"

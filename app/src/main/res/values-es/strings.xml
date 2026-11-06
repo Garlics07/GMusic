@@ -150,4 +150,60 @@
     <string name="auto_lib_albums">Álbumes</string>
     <string name="auto_lib_artists">Artistas</string>
     <string name="auto_lib_downloads">Descargas</string>
+
+    <!-- Hub de Biblioteca y Marcadores de Posición -->
+    <string name="library_hub_playlists_subtitle">%1$d listas</string>
+    <string name="library_hub_artists_subtitle">%1$d artistas guardados</string>
+    <string name="library_hub_albums_subtitle">%1$d álbumes guardados</string>
+    <string name="search_placeholder_playlists">Buscar en las listas…</string>
+    <string name="search_placeholder_artists">Buscar entre artistas…</string>
+    <string name="search_placeholder_albums">Buscar entre álbumes…</string>
+    <string name="search_placeholder_liked">Buscar en canciones favoritas…</string>
+    <string name="search_placeholder_downloads">Buscar en descargas…</string>
+    <string name="search_placeholder_playlist_tracks">Buscar en esta lista…</string>
+    <string name="playlist_item_type">Lista</string>
+
+    <!-- Cadenas Adicionales de Ajustes -->
+    <string name="settings_google_account">Cuenta de Google</string>
+    <string name="settings_theme_dynamic_title">Material You (Colores dinámicos)</string>
+    <string name="settings_theme_dynamic_desc">La app adopta fielmente los colores dinámicos extraídos del fondo de pantalla de tu dispositivo Android (Monet), asegurando consistencia visual en todas las pantallas.</string>
+    <string name="settings_quality_high_desc">Opus itag 251 (160 kbps) preferido con fallback AAC itag 140. Sin decodificación de video (solo audio estricto).</string>
+    <string name="settings_eq_presets">Ajustes predefinidos</string>
+    <string name="eq_preset_normal">Normal</string>
+    <string name="eq_preset_bass_boost">Refuerzo de graves</string>
+    <string name="eq_preset_rock">Rock</string>
+    <string name="eq_preset_pop">Pop</string>
+    <string name="eq_preset_jazz">Jazz</string>
+    <string name="eq_preset_vocal">Vocal</string>
+    <string name="settings_bass_boost">Refuerzo de graves</string>
+    <string name="settings_virtualizer">Virtualizador envolvente</string>
+    <string name="settings_frequency_bands">Bandas de frecuencia</string>
+    <string name="settings_storage_used">Espacio utilizado</string>
+    <string name="settings_cache_used_format">%1$d MB utilizados</string>
+    <string name="settings_cache_used_total_format">Espacio de caché utilizado: %1$d MB / 512 MB</string>
+    <string name="settings_cache_desc">Incluye los archivos de audio almacenados en la caché LRU temporal de reproducción.</string>
+    <string name="settings_version_format">Versión %1$s (Material Design 3)</string>
+    <string name="settings_app_subtitle">Cliente de Streaming Solo Audio • Backend de YouTube Music</string>
+    <string name="settings_changelog_title">Historial de actualizaciones de desarrollo</string>
+    <string name="menu_download_track">Descargar canción</string>
+    <string name="menu_remove_download">Eliminar descarga</string>
+    <string name="downloading_in_progress">Descargando…</string>
+    <string name="settings_changelog_v289_title">v2.8.9 (Actual) - Enlaces de YouTube Music &amp; Compartir</string>
+    <string name="settings_changelog_v289_desc">• Apertura directa de enlaces compartidos de YouTube Music y youtu.be en GMusic\n• Reproducción instantánea con reproductor a pantalla completa para canciones\n• Compatibilidad con listas, álbumes y canales de artistas compartidos\n• Actualización en el dispositivo fluida y garantizada</string>
+    <string name="settings_changelog_v285_title">v2.8.5 - Experiencia de Descarga &amp; Mejoras</string>
+    <string name="settings_changelog_v285_desc">• Animación interactiva de descarga en el reproductor a pantalla completa\n• Barra de progreso en tiempo real en Canciones descargadas\n• Botón de descarga añadido al menú de 3 puntos de las canciones\n• Pulsación larga en las canciones de Inicio para abrir opciones del tema</string>
+    <string name="settings_changelog_v280_title">v2.8.0 - Edición Material Design 3</string>
+    <string name="settings_changelog_v280_desc">• 100% Material Design 3 (Material You) con formas M3 y tipografía Poppins + JetBrains Mono\n• Reproductor a pantalla completa con WavySlider sinusoidal interactivo\n• Barra inferior flotante sólida con retorno inmediato a la raíz\n• Gradiente superior dinámico en Inicio proporcional a la cuadrícula 3x2\n• Búsqueda compacta con historial al enfocar\n• Biblioteca en 5 tarjetas (Favoritas, Listas, Artistas, Álbumes, Descargas) con búsqueda local en tiempo real\n• Pre-caché inteligente de 3 pistas para reproducción fluida\n• Versión dinámica e inicio de sesión simplificado</string>
+    <string name="settings_changelog_v270_desc">• Soporte multilingüe nativo para 4 idiomas (Italiano, English, Français, Español) según el sistema\n• Traducción dinámica automática de todas las secciones de Inicio\n• Sincronización bidireccional oficial del historial de YouTube Music\n• Encabezado de cuenta de Google simplificado con avatar, nombre y cierre de sesión rápido</string>
+    <string name="settings_changelog_v260_desc">• Nuevo logotipo oficial en móvil, Android Auto, widget e interfaz\n• Botón \'+\' compacto para crear nuevas listas de reproducción\n• Sección \'Canciones descargadas\' con reproducción y aleatorio\n• Gestión de listas: eliminación de pistas en el menú de 3 puntos, botones de aleatorio y descarga\n• Modal de ajustes centrado en pantalla</string>
+    <string name="settings_changelog_v250_desc">• Sincronización de reproducciones de YouTube Music en tiempo real\n• Gestión completa de listas (crear, añadir y eliminar pistas localmente y en YT)\n• Historial de reproducción integrado en la Biblioteca\n• Página de artista esencial con reproducción aleatoria y favoritos\n• Filtros de búsqueda dinámicos\n• Listas oficiales Top 100 de YouTube Music\n• Modal interactivo de ajustes</string>
+    <string name="settings_changelog_v240_desc">• Álbumes solo con versiones de audio oficiales (ATV, sin vídeos musicales)\n• Portadas HD 1:1 originales para todas las pistas de álbumes\n• Radio de artista instantánea en Android Auto\n• Icono de corazón para la Biblioteca en Android Auto\n• Insets de barra de estado en todas las subpantallas</string>
+    <string name="settings_changelog_v230_desc">• Rediseño de interfaz de Inicio (cuadrícula 2x3 \'Reproducciones recientes\')\n• Gradiente dinámico con paleta animada\n• Carruseles paginados fluidos</string>
+    <string name="settings_changelog_v200_desc">• Reescritura completa de la aplicación desde cero\n• Jetpack Compose Material 3, Media3 ExoPlayer y Android Auto\n• Selector de stream resiliente Opus 251 / AAC 140 con NewPipeExtractor</string>
+    <string name="settings_instances_piped_csv">Instancias Piped (separadas por comas)</string>
+    <string name="settings_instances_invidious_csv">Instancias Invidious (separadas por comas)</string>
+    <string name="settings_account_connected">Estado: Conectado a YouTube Music</string>
+    <string name="settings_about_desc">GMusic v%1$s • Streaming solo audio (Opus 251 / AAC 140) • 100% Material Design 3</string>
+    <string name="state_on">ACT.</string>
+    <string name="state_off">DESACT.</string>
 </resources>

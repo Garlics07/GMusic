@@ -19,19 +19,21 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.NorthWest
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -42,12 +44,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -67,7 +71,6 @@ fun SearchScreen(
     viewModel: SearchViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val recentSearches by viewModel.recentSearches.collectAsStateWithLifecycle()
     val localPlaylists by viewModel.localPlaylists.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
     var trackForPlaylistDialog by remember { mutableStateOf<Track?>(null) }
@@ -82,42 +85,84 @@ fun SearchScreen(
         )
     }
 
+    var isSearchFocused by remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        Text(
-            text = stringResource(R.string.nav_search),
-            style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-
-        OutlinedTextField(
+        val searchInteractionSource = remember { MutableInteractionSource() }
+        @OptIn(ExperimentalMaterial3Api::class)
+        BasicTextField(
             value = state.query,
             onValueChange = viewModel::onQueryChange,
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text(stringResource(R.string.search_placeholder)) },
-            leadingIcon = {
-                Icon(imageVector = Icons.Filled.Search, contentDescription = null)
-            },
-            trailingIcon = {
-                if (state.query.isNotEmpty()) {
-                    IconButton(onClick = { viewModel.onQueryChange("") }) {
-                        Icon(imageVector = Icons.Filled.Clear, contentDescription = null)
-                    }
-                }
-            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(44.dp)
+                .onFocusChanged { isSearchFocused = it.isFocused },
+            textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
             singleLine = true,
-            shape = RoundedCornerShape(14.dp),
+            interactionSource = searchInteractionSource,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             keyboardActions = KeyboardActions(
                 onSearch = {
                     focusManager.clearFocus()
                     viewModel.onSubmitSearch()
                 }
-            )
+            ),
+            decorationBox = { innerTextField ->
+                OutlinedTextFieldDefaults.DecorationBox(
+                    value = state.query,
+                    innerTextField = innerTextField,
+                    enabled = true,
+                    singleLine = true,
+                    visualTransformation = VisualTransformation.None,
+                    interactionSource = searchInteractionSource,
+                    placeholder = {
+                        Text(
+                            text = stringResource(R.string.search_placeholder),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    trailingIcon = {
+                        if (state.query.isNotEmpty()) {
+                            IconButton(onClick = { viewModel.onQueryChange("") }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Clear,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    },
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
+                    container = {
+                        OutlinedTextFieldDefaults.ContainerBox(
+                            enabled = true,
+                            isError = false,
+                            interactionSource = searchInteractionSource,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                            ),
+                            shape = CircleShape
+                        )
+                    }
+                )
+            }
         )
 
         if (state.query.isNotBlank()) {
@@ -163,58 +208,15 @@ fun SearchScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         when {
             state.query.isBlank() -> {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 28.dp),
+                    contentPadding = PaddingValues(bottom = 120.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    if (recentSearches.isNotEmpty()) {
-                        item(key = "recent_searches_header") {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.search_recent),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onBackground
-                                )
-                                TextButton(onClick = viewModel::clearHistory) {
-                                    Text(text = stringResource(R.string.search_clear_history))
-                                }
-                            }
-                        }
-                        items(recentSearches.take(5), key = { "rec_$it" }) { item ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        focusManager.clearFocus()
-                                        viewModel.onSubmitSearch(item)
-                                    }
-                                    .padding(vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.History,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(
-                                    text = item,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onBackground
-                                )
-                            }
-                        }
-                    }
-
                     if (state.exploreMoods.isNotEmpty()) {
                         item(key = "explore_moods_title") {
                             Text(
@@ -235,7 +237,7 @@ fun SearchScreen(
                                                 modifier = Modifier
                                                     .weight(1f)
                                                     .height(74.dp)
-                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .clip(MaterialTheme.shapes.medium)
                                                     .background(Color(mood.colorHex))
                                                     .clickable {
                                                         focusManager.clearFocus()
@@ -274,6 +276,8 @@ fun SearchScreen(
                                 onPlay = { onPlayTrack(track, state.exploreCharts) },
                                 onToggleLike = viewModel::toggleLike,
                                 onAddToPlaylistRequest = { trackForPlaylistDialog = it },
+                                onDownloadRequest = viewModel::downloadTrack,
+                                onRemoveDownloadRequest = viewModel::removeDownload,
                                 onNavigateToArtist = onNavigateToArtist,
                                 onNavigateToAlbum = onNavigateToAlbum
                             )
@@ -344,6 +348,8 @@ fun SearchScreen(
                                 onPlay = { onPlayTrack(track, state.songResults) },
                                 onToggleLike = viewModel::toggleLike,
                                 onAddToPlaylistRequest = { trackForPlaylistDialog = it },
+                                onDownloadRequest = viewModel::downloadTrack,
+                                onRemoveDownloadRequest = viewModel::removeDownload,
                                 onNavigateToArtist = onNavigateToArtist,
                                 onNavigateToAlbum = onNavigateToAlbum
                             )

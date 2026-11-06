@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -60,44 +61,9 @@ fun SettingsScreen(
     val cacheSizeMb by viewModel.cacheSizeMb.collectAsStateWithLifecycle()
     val isLoggedIn by viewModel.isLoggedIn.collectAsStateWithLifecycle()
 
-    var showCookieDialog by remember { mutableStateOf(false) }
-    var cookieInput by remember { mutableStateOf("") }
     var showInstancesDialog by remember { mutableStateOf(false) }
     var pipedInput by remember(settings.pipedInstancesCsv) { mutableStateOf(settings.pipedInstancesCsv) }
     var invidiousInput by remember(settings.invidiousInstancesCsv) { mutableStateOf(settings.invidiousInstancesCsv) }
-
-    if (showCookieDialog) {
-        AlertDialog(
-            onDismissRequest = { showCookieDialog = false },
-            title = { Text(stringResource(R.string.settings_paste_cookie)) },
-            text = {
-                OutlinedTextField(
-                    value = cookieInput,
-                    onValueChange = { cookieInput = it },
-                    placeholder = { Text("SAPISID=...; __Secure-3PAPISID=...") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (cookieInput.isNotBlank()) {
-                            viewModel.saveManualCookie(cookieInput)
-                            cookieInput = ""
-                            showCookieDialog = false
-                        }
-                    }
-                ) {
-                    Text(stringResource(R.string.action_confirm))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showCookieDialog = false }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
-            }
-        )
-    }
 
     if (showInstancesDialog) {
         AlertDialog(
@@ -108,13 +74,13 @@ fun SettingsScreen(
                     OutlinedTextField(
                         value = pipedInput,
                         onValueChange = { pipedInput = it },
-                        label = { Text("Piped (separati da virgola)") },
+                        label = { Text(stringResource(R.string.settings_instances_piped_csv)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
                         value = invidiousInput,
                         onValueChange = { invidiousInput = it },
-                        label = { Text("Invidious (separati da virgola)") },
+                        label = { Text(stringResource(R.string.settings_instances_invidious_csv)) },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -159,22 +125,21 @@ fun SettingsScreen(
             }
         }
 
-        // Tema e Adaptive Player
+        // Tema Material You
         item {
             SettingsCard(title = stringResource(R.string.settings_theme)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = stringResource(R.string.settings_adaptive_player),
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.weight(1f)
+                        text = stringResource(R.string.settings_theme_dynamic_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                    Switch(
-                        checked = settings.adaptivePlayerColor,
-                        onCheckedChange = viewModel::setAdaptivePlayerColor
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.settings_theme_dynamic_desc),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -272,7 +237,7 @@ fun SettingsScreen(
                 if (support.bassBoostSupported) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Bass Boost: ${settings.bassBoostPercent}%",
+                        text = "${stringResource(R.string.settings_bass_boost)}: ${settings.bassBoostPercent}%",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Slider(
@@ -286,7 +251,7 @@ fun SettingsScreen(
                 if (support.virtualizerSupported) {
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Virtualizzatore: ${settings.virtualizerPercent}%",
+                        text = "${stringResource(R.string.settings_virtualizer)}: ${settings.virtualizerPercent}%",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Slider(
@@ -303,7 +268,7 @@ fun SettingsScreen(
         item {
             SettingsCard(title = stringResource(R.string.settings_cache)) {
                 Text(
-                    text = "Spazio cache utilizzato: $cacheSizeMb MB / 512 MB",
+                    text = stringResource(R.string.settings_cache_used_total_format, cacheSizeMb),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(modifier = Modifier.height(10.dp))
@@ -336,7 +301,7 @@ fun SettingsScreen(
             SettingsCard(title = stringResource(R.string.settings_account)) {
                 if (isLoggedIn) {
                     Text(
-                        text = "Stato: Connesso a YouTube Music",
+                        text = stringResource(R.string.settings_account_connected),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -348,20 +313,12 @@ fun SettingsScreen(
                         Text(stringResource(R.string.settings_logout))
                     }
                 } else {
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        if (onOpenWebLogin != null) {
-                            Button(
-                                onClick = onOpenWebLogin,
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text(stringResource(R.string.settings_login))
-                            }
-                        }
-                        FilledTonalButton(
-                            onClick = { showCookieDialog = true },
-                            modifier = Modifier.weight(1f)
+                    if (onOpenWebLogin != null) {
+                        Button(
+                            onClick = onOpenWebLogin,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(stringResource(R.string.settings_paste_cookie))
+                            Text(stringResource(R.string.settings_login))
                         }
                     }
                 }
@@ -372,7 +329,7 @@ fun SettingsScreen(
         item {
             SettingsCard(title = stringResource(R.string.settings_about)) {
                 Text(
-                    text = "GMusic v1.0.0 • Streaming solo audio (Opus 251 / AAC 140) • Material You",
+                    text = stringResource(R.string.settings_about_desc, com.gmusic.app.BuildConfig.VERSION_NAME),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

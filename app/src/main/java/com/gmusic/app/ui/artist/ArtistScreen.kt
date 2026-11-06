@@ -70,7 +70,8 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class ArtistViewModel @Inject constructor(
-    private val musicRepository: MusicRepository
+    private val musicRepository: MusicRepository,
+    private val offlineDownloadController: com.gmusic.app.data.download.OfflineDownloadController
 ) : ViewModel() {
 
     private val _detail = MutableStateFlow<ArtistDetail?>(null)
@@ -130,6 +131,14 @@ class ArtistViewModel @Inject constructor(
             val id = musicRepository.createPlaylist(title)
             musicRepository.addTrackToPlaylist(id, track)
         }
+    }
+
+    fun downloadTrack(track: Track) {
+        offlineDownloadController.downloadTrack(track)
+    }
+
+    fun removeDownload(track: Track) {
+        offlineDownloadController.removeDownload(track.id)
     }
 }
 
@@ -268,6 +277,8 @@ fun ArtistScreen(
                         onPlay = { onPlayTrack(track, songsToPlay) },
                         onToggleLike = viewModel::toggleLike,
                         onAddToPlaylistRequest = { trackForPlaylistDialog = it },
+                        onDownloadRequest = viewModel::downloadTrack,
+                        onRemoveDownloadRequest = viewModel::removeDownload,
                         onNavigateToAlbum = onNavigateToAlbum
                     )
                 }
