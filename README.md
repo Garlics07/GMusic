@@ -33,16 +33,27 @@
   * Struttura a 3 tab dedicate per il cruscotto: **Home**, **Cerca**, **La tua libreria**.
   * Griglia rapida 3x2 (Preferiti + mix dinamico tra playlist, artisti e recenti).
   * Carosello *"Riproduzioni recenti"* con gli ultimi 5 brani per una guida sicura.
-* **🎨 Interfaccia Moderna Material 3 (Spotify-Style)**
-  * Palette cromatica dinamica estratta automaticamente dalla copertina del brano in riproduzione.
-  * Home feed intelligente: 6 mix personalizzati da YouTube Music, scaffale *Riproduzioni recenti*, consigliati per te e nuove uscite.
-  * Navigazione fluida con mini-player a comparsa ed expandable full-screen player.
+* **🎨 Interfaccia 100% Material Design 3 (Material You)**
+  * Palette cromatica dinamica e adattiva estratta dalla copertina del brano in riproduzione.
+  * WavySlider sinusoidale interattivo nel player a schermo intero in stile Google Pixel.
+  * Floating bottom bar solida con ritorno immediato alla radice.
+  * Libreria organizzata in 5 card tematiche (Preferiti, Playlist, Artisti, Album, Scaricati) con ricerca locale in tempo reale.
+  * Pre-caching intelligente a 3 tracce per riproduzione senza interruzioni (*gapless playback*).
 * **🎤 Testi Sincronizzati (LRC)**
   * Visualizzazione testi in tempo reale con scorrimento automatico stile karaoke.
   * Supporto a testi sincronizzati e non sincronizzati con fallback e romanizzazione fonetica (Romaji per brani giapponesi).
-* **📴 Ascolto Offline & Cache Intelligente**
+* **📴 Ascolto Offline, Cache & Esperienza Download Avanzata**
   * Download brani con storage locale e persistenza metadati su database Room.
+  * **Feedback interattivo sul player**: animazione a rimbalzo (*spring bounce*) e anello di avanzamento circolare in tempo reale (`CircularProgressIndicator`).
+  * **Sezione Canzoni scaricate reattiva**: comparsa istantanea dei brani in corso di scaricamento con barra lineare (`LinearProgressIndicator`) e percentuale in tempo reale.
+  * **Tasto Scarica nel menu a 3 puntini**: opzione *"Scarica brano"* / *"Elimina download"* presente ovunque (Libreria, Ricerca per tendenze e risultati, Album, Artisti e Playlist).
+  * **Long-press in Home**: pressione prolungata sulle singole canzoni per aprire il menu contestuale rapido.
   * Modalità offline automatica in assenza di connessione di rete.
+* **🔗 Apertura Link YouTube Music & Condivisione (Deep Linking)**
+  * **Intercettazione link**: apertura diretta di link `music.youtube.com`, `youtu.be` e `youtube.com`.
+  * **Riproduzione istantanea**: avvio automatico dello streaming ed espansione a schermo intero per i brani condivisi.
+  * **Supporto a playlist e album condivisi**: caricamento immediato della coda d'ascolto.
+  * **Integrazione Share Sheet (`ACTION_SEND`)**: invio diretto di link da WhatsApp, Telegram, YouTube Music o browser verso GMusic.
 * **🌐 Supporto Multilingua Nativo (IT, EN, FR, ES)**
   * Supporto nativo per **Italiano**, **Inglese**, **Francese** e **Spagnolo**.
   * Integrazione ufficiale **Per-App Language Android 13+** e rilevamento automatico della lingua di sistema del dispositivo.
@@ -69,31 +80,38 @@ GMusic adotta una rigorosa **Clean Architecture** (Presentation, Domain, Data) o
 
 ---
 
-### 🚀 Compilazione ed Installazione
+### 📦 Download ed Installazione (Release Ufficiali)
 
-#### Prerequisiti
+I file di release APK pronti all'installazione su smartphone e tablet Android sono disponibili direttamente nella sezione **[Releases](../../releases)** del repository (oltre che nella cartella principale del progetto, es. `GMusic 2.8.9.apk`).
+
+> [!NOTE]
+> **Tutte le build di rilascio vengono compilate, ottimizzate (con R8/ProGuard) e firmate manualmente dallo sviluppatore** (non tramite GitHub Actions o server CI esterni). Questo assicura che ogni aggiornamento sia testato, mantenga la stessa chiave crittografica e permetta l'**aggiornamento diretto (*in-place update*)** senza perdere playlist, preferiti o brani scaricati.
+
+#### 🚀 Compilazione da Sorgente (per sviluppatori)
+
+##### Prerequisiti
 * **Java Development Kit (JDK)**: Versione 17 o superiore.
 * **Android SDK**: Build tools 34.0.0+, Android API 26 (minSdk) fino a 35 (targetSdk).
 
-#### Compilazione da Terminale
+##### Compilazione da Terminale
 ```bash
 # Clona il repository
 git clone https://github.com/<username>/GMusic.git
 cd GMusic
 
 # Su Linux / macOS:
-./gradlew assembleDebug
+./gradlew assembleRelease
 
 # Su Windows (PowerShell):
-.\gradlew.bat assembleDebug
+.\gradlew.bat assembleRelease
 ```
 
-L'APK compilato sarà disponibile in:
-`app/build/outputs/apk/debug/app-debug.apk`
+L'APK compilato viene generato in:
+`app/build/outputs/apk/release/app-release.apk`
 
-#### Installazione rapida via ADB:
+##### Installazione rapida via ADB:
 ```bash
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r "GMusic 2.8.9.apk"
 ```
 
 ---
@@ -114,16 +132,27 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
   * 3 dashboard-optimized tabs: **Home**, **Search**, **Your Library**.
   * 3x2 Quick Access Grid (Liked Songs + random mix of playlists, artists, and recent tracks).
   * Safe-driving recent plays shelf (last 5 items on in-car display).
-* **🎨 Modern Material 3 UI (Spotify-Style)**
-  * Adaptive ambient background tint extracted dynamically from the playing album cover.
-  * Smart home shelves: 6 custom YouTube Music mixes, recent plays carousel, recommended tracks, and Italian/global trends.
-  * Expandable full-screen player with gestures and seamless mini-player transition.
+* **🎨 100% Material Design 3 (Material You) UI**
+  * Dynamic adaptive palette extracted in real-time from album artworks.
+  * Interactive sinusoidal WavySlider in full-screen player inspired by Google Pixel.
+  * Solid floating bottom bar with instantaneous return to root destinations.
+  * Library structured in 5 unified cards (Liked, Playlists, Artists, Albums, Downloads) with live search.
+  * Intelligent 3-track pre-caching for gapless audio playback.
 * **🎤 Synchronized Lyrics (LRC)**
   * Real-time karaoke-style auto-scrolling lyrics.
   * Support for synchronized and plain lyrics with phonetic romanization (Romaji for Japanese titles).
-* **📴 Offline Caching & Downloads**
+* **📴 Offline Caching, Storage & Advanced Download Experience**
   * One-tap track downloading stored locally via Room database.
+  * **Interactive player feedback**: spring bounce animation and live circular progress indicator (`CircularProgressIndicator`) transitioning to `DownloadDone`.
+  * **Real-time Downloaded Songs screen**: downloading tracks appear immediately at the top with linear progress bar and percentage.
+  * **3-dots menu download action**: *"Download track"* / *"Delete download"* added across Library, Search (trending & results), Albums, Artists, and Playlists.
+  * **Long-press on Home**: long press any individual song to reveal quick track options.
   * Resilient offline mode: playback continues gracefully without network connection.
+* **🔗 YouTube Music Deep Linking & Direct Sharing**
+  * **Link interception**: seamlessly open `music.youtube.com`, `youtu.be`, and `youtube.com` links.
+  * **Instant playback**: automatically streams and opens the full-screen player upon receiving a shared song link.
+  * **Shared playlists & albums**: loads full queue and begins playback.
+  * **Android Share Sheet (`ACTION_SEND`)**: share songs directly from WhatsApp, Telegram, YouTube Music, or browsers directly into GMusic.
 * **🌐 Native Multilingual Support (IT, EN, FR, ES)**
   * Full native support for **Italian**, **English**, **French**, and **Spanish**.
   * Official **Android 13+ Per-App Language** integration and automatic device system language detection.
@@ -150,31 +179,38 @@ GMusic follows **Clean Architecture** patterns with unidirectional data flow (UD
 
 ---
 
-### 🚀 Building from Source
+### 📦 Download & Installation (Official Releases)
 
-#### Prerequisites
+Ready-to-install release APKs for Android phones and tablets are available under the **[Releases](../../releases)** section of this repository (as well as the project root directory, e.g., `GMusic 2.8.9.apk`).
+
+> [!NOTE]
+> **All release builds are compiled, optimized (via R8/ProGuard), and cryptographically signed manually by the developer** (not generated through GitHub Actions or external CI bots). This ensures verified performance, consistent signing keys, and **guaranteed in-place updates** without losing your downloaded songs, playlists, or favorite tracks.
+
+#### 🚀 Building from Source (for developers)
+
+##### Prerequisites
 * **Java Development Kit (JDK)**: JDK 17 or higher.
 * **Android SDK**: Build tools 34.0.0+, minSdk 26, targetSdk 35.
 
-#### Build Commands
+##### Build Commands
 ```bash
 # Clone the repository
 git clone https://github.com/<username>/GMusic.git
 cd GMusic
 
 # On Linux / macOS:
-./gradlew assembleDebug
+./gradlew assembleRelease
 
 # On Windows (PowerShell):
-.\gradlew.bat assembleDebug
+.\gradlew.bat assembleRelease
 ```
 
 The compiled APK will be generated at:
-`app/build/outputs/apk/debug/app-debug.apk`
+`app/build/outputs/apk/release/app-release.apk`
 
-#### Install via ADB
+##### Quick Install via ADB
 ```bash
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r "GMusic 2.8.9.apk"
 ```
 
 ---
