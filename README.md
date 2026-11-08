@@ -24,6 +24,11 @@
 
 ### ✨ Caratteristiche Principali
 
+* **🔄 Orientamento Dinamico & Layout Tablet/Landscape (v2.9.2)**
+  * **Rotazione libera sensoriale**: orientamento dinamico e fluido sia in Portrait che in Landscape per smartphone e tablet.
+  * **Barra di navigazione ancorata al lato fisico inferiore del device**: in orizzontale la barra resta ancorata al bordo del connettore/altoparlanti (destra o sinistra in base a come viene ruotato il dispositivo), trasformandosi in un dock verticale ergonomico per il pollice, garantendo che fotocamere e notch non siano mai d'intralcio.
+  * **Player a 2 colonne in Landscape**: colonna sinistra con copertina, slider ondoso e controlli di riproduzione; colonna destra con selettore rapido a schede (*tab switcher*) per alternare tra **Testi sincronizzati (Karaoke LRC)** e **Coda di riproduzione**.
+  * **Home Screen adattiva**: griglia di accesso rapido che passa automaticamente da **2x3** in verticale a **3x2** in orizzontale, con caroselli e card distribuiti armoniosamente.
 * **🔄 Sincronizzazione Reale a Doppia Via (YouTube Music $\leftrightarrow$ GMusic)**
   * **Registrazione ufficiale degli ascolti**: Gli ascolti effettuati nell'app vengono registrati all'istante nella cronologia ufficiale del tuo account Google tramite protocollo InnerTube ufficiale (Playback & Watch-Time tracking HTTP 204).
   * **Cronologia account bidirezionale**: Visualizza e aggiorna la cronologia in tempo reale con pull-to-refresh (`FEmusic_history`).
@@ -82,7 +87,7 @@ GMusic adotta una rigorosa **Clean Architecture** (Presentation, Domain, Data) o
 
 ### 📦 Download ed Installazione (Release Ufficiali)
 
-I file di release APK pronti all'installazione su smartphone e tablet Android sono disponibili direttamente nella sezione **[Releases](../../releases)** del repository (oltre che nella cartella principale del progetto, es. `GMusic 2.8.9.apk`).
+I file di release APK pronti all'installazione su smartphone e tablet Android sono disponibili direttamente nella sezione **[Releases](../../releases)** del repository (oltre che nella cartella principale del progetto, es. `GMusic 2.9.2.apk`).
 
 > [!NOTE]
 > **Tutte le build di rilascio vengono compilate, ottimizzate (con R8/ProGuard) e firmate manualmente dallo sviluppatore** (non tramite GitHub Actions o server CI esterni). Questo assicura che ogni aggiornamento sia testato, mantenga la stessa chiave crittografica e permetta l'**aggiornamento diretto (*in-place update*)** senza perdere playlist, preferiti o brani scaricati.
@@ -111,7 +116,7 @@ L'APK compilato viene generato in:
 
 ##### Installazione rapida via ADB:
 ```bash
-adb install -r "GMusic 2.8.9.apk"
+adb install -r "GMusic 2.9.2.apk"
 ```
 
 ---
@@ -123,6 +128,11 @@ adb install -r "GMusic 2.8.9.apk"
 
 ### ✨ Key Features
 
+* **🔄 Dynamic Orientation & Tablet/Landscape Layout (v2.9.2)**
+  * **Fluid sensor-based rotation**: seamless switching between Portrait and Landscape on phones and tablets.
+  * **Navigation bar docked to physical bottom edge**: in landscape, the navigation bar anchors along the device's physical bottom (where charging port/speakers are located, right or left depending on rotation), morphing into an ergonomic vertical pill dock that keeps front cameras and notches unobstructed.
+  * **Two-pane Full Player in Landscape**: left pane hosts artwork, track metadata, wavy slider, and playback controls; right pane includes an interactive tab switcher to toggle between **Synchronized Lyrics (Karaoke LRC)** and the **Playback Queue**.
+  * **Adaptive Home Screen**: top quick access grid dynamically shifts from **2x3** in portrait to **3x2** in landscape, preserving elegant card proportions.
 * **🔄 Genuine Two-Way Sync (YouTube Music $\leftrightarrow$ GMusic)**
   * **Official Playback Tracking**: Listened songs in GMusic are immediately reported to your Google account's official history using standard InnerTube endpoints (HTTP 204 Playback & Watch-Time beacons).
   * **Live History Sync**: Browse and refresh your YouTube Music listening history seamlessly (`FEmusic_history`).
@@ -181,7 +191,7 @@ GMusic follows **Clean Architecture** patterns with unidirectional data flow (UD
 
 ### 📦 Download & Installation (Official Releases)
 
-Ready-to-install release APKs for Android phones and tablets are available under the **[Releases](../../releases)** section of this repository (as well as the project root directory, e.g., `GMusic 2.8.9.apk`).
+Ready-to-install release APKs for Android phones and tablets are available under the **[Releases](../../releases)** section of this repository (as well as the project root directory, e.g., `GMusic 2.9.2.apk`).
 
 > [!NOTE]
 > **All release builds are compiled, optimized (via R8/ProGuard), and cryptographically signed manually by the developer** (not generated through GitHub Actions or external CI bots). This ensures verified performance, consistent signing keys, and **guaranteed in-place updates** without losing your downloaded songs, playlists, or favorite tracks.
@@ -210,7 +220,7 @@ The compiled APK will be generated at:
 
 ##### Quick Install via ADB
 ```bash
-adb install -r "GMusic 2.8.9.apk"
+adb install -r "GMusic 2.9.2.apk"
 ```
 
 ---

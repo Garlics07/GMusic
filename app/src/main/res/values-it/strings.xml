@@ -6,7 +6,7 @@
     <string name="nav_home">Home</string>
     <string name="nav_search">Cerca</string>
     <string name="nav_explore">Esplora</string>
-    <string name="nav_library">La tua libreria</string>
+    <string name="nav_library">Libreria</string>
     <string name="nav_settings">Impostazioni</string>
 
     <!-- Saluti Home -->
@@ -51,7 +51,7 @@
     <string name="filter_playlists">Playlist</string>
 
     <!-- Libreria e Playlist -->
-    <string name="library_title">La tua libreria</string>
+    <string name="library_title">Libreria</string>
     <string name="library_history_title">Cronologia ascolti</string>
     <string name="library_clear_history">Cancella cronologia</string>
     <string name="library_clear_history_confirm">Vuoi cancellare la cronologia degli ascolti?</string>
@@ -103,6 +103,7 @@
     <string name="player_now_playing">In riproduzione</string>
     <string name="player_queue">Coda di riproduzione</string>
     <string name="player_lyrics">Testo</string>
+    <string name="no_lyrics_available">Nessun testo disponibile</string>
     <string name="player_add_to_playlist">Aggiungi a playlist</string>
     <string name="player_download">Scarica brano</string>
     <string name="player_like">Aggiungi ai preferiti</string>

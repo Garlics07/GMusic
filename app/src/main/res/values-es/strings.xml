@@ -6,7 +6,7 @@
     <string name="nav_home">Inicio</string>
     <string name="nav_search">Buscar</string>
     <string name="nav_explore">Explorar</string>
-    <string name="nav_library">Tu biblioteca</string>
+    <string name="nav_library">Biblioteca</string>
     <string name="nav_settings">Ajustes</string>
 
     <!-- Saludos Inicio -->
@@ -51,7 +51,7 @@
     <string name="filter_playlists">Listas</string>
 
     <!-- Biblioteca y Listas -->
-    <string name="library_title">Tu biblioteca</string>
+    <string name="library_title">Biblioteca</string>
     <string name="library_history_title">Historial de reproducción</string>
     <string name="library_clear_history">Borrar historial</string>
     <string name="library_clear_history_confirm">¿Deseas borrar tu historial de reproducción?</string>
@@ -103,6 +103,7 @@
     <string name="player_now_playing">En reproducción</string>
     <string name="player_queue">Cola de reproducción</string>
     <string name="player_lyrics">Letra</string>
+    <string name="no_lyrics_available">No hay letras disponibles</string>
     <string name="player_add_to_playlist">Añadir a lista</string>
     <string name="player_download">Descargar canción</string>
     <string name="player_like">Añadir a favoritos</string>

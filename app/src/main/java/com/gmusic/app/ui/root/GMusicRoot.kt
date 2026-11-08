@@ -1,15 +1,24 @@
 package com.gmusic.app.ui.root
 
+import android.content.Context
+import android.content.res.Configuration
 import android.net.Uri
+import android.os.Build
+import android.view.Surface as AndroidSurface
+import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,9 +26,13 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -103,6 +116,36 @@ fun GMusicRoot(
     val localPlaylists by playerViewModel.localPlaylists.collectAsStateWithLifecycle()
     val activeDownloads by playerViewModel.activeDownloads.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val displayRotation = remember(configuration) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            try {
+                context.display?.rotation ?: AndroidSurface.ROTATION_0
+            } catch (_: Throwable) {
+                AndroidSurface.ROTATION_0
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            (context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager)?.defaultDisplay?.rotation ?: AndroidSurface.ROTATION_0
+        }
+    }
+    val dockAlignment = when {
+        !isLandscape -> Alignment.BottomCenter
+        displayRotation == AndroidSurface.ROTATION_270 -> Alignment.CenterStart
+        displayRotation == AndroidSurface.ROTATION_90 -> Alignment.CenterEnd
+        else -> Alignment.BottomCenter
+    }
+    val contentStartPadding = when {
+        !isLandscape -> 16.dp
+        dockAlignment == Alignment.CenterStart -> 88.dp
+        else -> 32.dp
+    }
+    val contentEndPadding = when {
+        !isLandscape -> 16.dp
+        dockAlignment == Alignment.CenterEnd -> 88.dp
+        else -> 32.dp
+    }
     var showSettingsModal by remember { mutableStateOf(false) }
 
     val navigateToAlbum: (String, String) -> Unit = { id, title ->
@@ -160,10 +203,14 @@ fun GMusicRoot(
                         animatedVisibilityScope = this@AnimatedContent
                     )
                 } else {
-                    Box(modifier = Modifier.fillMaxSize()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background)
+                    ) {
                         Scaffold(
                             modifier = Modifier.fillMaxSize(),
-                            containerColor = MaterialTheme.colorScheme.background,
+                            containerColor = Color.Transparent,
                             contentWindowInsets = WindowInsets(0, 0, 0, 0),
                             snackbarHost = { SnackbarHost(snackbarHostState) }
                         ) { _ ->
@@ -183,7 +230,9 @@ fun GMusicRoot(
                                         },
                                         onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
                                         onNavigateToArtist = navigateToArtist,
-                                        onNavigateToAlbum = navigateToAlbum
+                                        onNavigateToAlbum = navigateToAlbum,
+                                        contentStartPadding = contentStartPadding,
+                                        contentEndPadding = contentEndPadding
                                     )
                                 }
                                 composable(TopLevelDestination.SEARCH.route) {
@@ -191,7 +240,12 @@ fun GMusicRoot(
                                         onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
                                         onNavigateToArtist = navigateToArtist,
                                         onNavigateToAlbum = navigateToAlbum,
-                                        modifier = Modifier.statusBarsPadding()
+                                        modifier = Modifier
+                                            .statusBarsPadding()
+                                            .padding(
+                                                start = if (isLandscape) contentStartPadding else 0.dp,
+                                                end = if (isLandscape) contentEndPadding else 0.dp
+                                            )
                                     )
                                 }
                                 composable(TopLevelDestination.LIBRARY.route) {
@@ -208,7 +262,12 @@ fun GMusicRoot(
                                         onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
                                         onOpenArtist = navigateToArtist,
                                         onOpenHistory = { navController.navigate("history") },
-                                        modifier = Modifier.statusBarsPadding()
+                                        modifier = Modifier
+                                            .statusBarsPadding()
+                                            .padding(
+                                                start = if (isLandscape) contentStartPadding else 0.dp,
+                                                end = if (isLandscape) contentEndPadding else 0.dp
+                                            )
                                     )
                                 }
                                 composable("library_playlists") {
@@ -217,21 +276,36 @@ fun GMusicRoot(
                                         onOpenPlaylist = { playlistId ->
                                             navController.navigate("playlist/${Uri.encode(playlistId)}")
                                         },
-                                        modifier = Modifier.statusBarsPadding()
+                                        modifier = Modifier
+                                            .statusBarsPadding()
+                                            .padding(
+                                                start = if (isLandscape) contentStartPadding else 0.dp,
+                                                end = if (isLandscape) contentEndPadding else 0.dp
+                                            )
                                     )
                                 }
                                 composable("library_artists") {
                                     LibraryArtistsScreen(
                                         onBack = { navController.popBackStack() },
                                         onOpenArtist = navigateToArtist,
-                                        modifier = Modifier.statusBarsPadding()
+                                        modifier = Modifier
+                                            .statusBarsPadding()
+                                            .padding(
+                                                start = if (isLandscape) contentStartPadding else 0.dp,
+                                                end = if (isLandscape) contentEndPadding else 0.dp
+                                            )
                                     )
                                 }
                                 composable("library_albums") {
                                     LibraryAlbumsScreen(
                                         onBack = { navController.popBackStack() },
                                         onOpenAlbum = navigateToAlbum,
-                                        modifier = Modifier.statusBarsPadding()
+                                        modifier = Modifier
+                                            .statusBarsPadding()
+                                            .padding(
+                                                start = if (isLandscape) contentStartPadding else 0.dp,
+                                                end = if (isLandscape) contentEndPadding else 0.dp
+                                            )
                                     )
                                 }
                                 composable("history") {
@@ -240,7 +314,12 @@ fun GMusicRoot(
                                         onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
                                         onNavigateToArtist = navigateToArtist,
                                         onNavigateToAlbum = navigateToAlbum,
-                                        modifier = Modifier.statusBarsPadding()
+                                        modifier = Modifier
+                                            .statusBarsPadding()
+                                            .padding(
+                                                start = if (isLandscape) contentStartPadding else 0.dp,
+                                                end = if (isLandscape) contentEndPadding else 0.dp
+                                            )
                                     )
                                 }
                                 composable("liked_songs") {
@@ -249,7 +328,12 @@ fun GMusicRoot(
                                         onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
                                         onNavigateToArtist = navigateToArtist,
                                         onNavigateToAlbum = navigateToAlbum,
-                                        modifier = Modifier.statusBarsPadding()
+                                        modifier = Modifier
+                                            .statusBarsPadding()
+                                            .padding(
+                                                start = if (isLandscape) contentStartPadding else 0.dp,
+                                                end = if (isLandscape) contentEndPadding else 0.dp
+                                            )
                                     )
                                 }
                                 composable("downloaded_songs") {
@@ -258,7 +342,12 @@ fun GMusicRoot(
                                         onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
                                         onNavigateToArtist = navigateToArtist,
                                         onNavigateToAlbum = navigateToAlbum,
-                                        modifier = Modifier.statusBarsPadding()
+                                        modifier = Modifier
+                                            .statusBarsPadding()
+                                            .padding(
+                                                start = if (isLandscape) contentStartPadding else 0.dp,
+                                                end = if (isLandscape) contentEndPadding else 0.dp
+                                            )
                                     )
                                 }
                                 composable(
@@ -272,7 +361,12 @@ fun GMusicRoot(
                                         onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
                                         onNavigateToArtist = navigateToArtist,
                                         onNavigateToAlbum = navigateToAlbum,
-                                        modifier = Modifier.statusBarsPadding()
+                                        modifier = Modifier
+                                            .statusBarsPadding()
+                                            .padding(
+                                                start = if (isLandscape) contentStartPadding else 0.dp,
+                                                end = if (isLandscape) contentEndPadding else 0.dp
+                                            )
                                     )
                                 }
                                 composable(
@@ -291,7 +385,12 @@ fun GMusicRoot(
                                         onBack = { navController.popBackStack() },
                                         onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
                                         onNavigateToArtist = navigateToArtist,
-                                        modifier = Modifier.statusBarsPadding()
+                                        modifier = Modifier
+                                            .statusBarsPadding()
+                                            .padding(
+                                                start = if (isLandscape) contentStartPadding else 0.dp,
+                                                end = if (isLandscape) contentEndPadding else 0.dp
+                                            )
                                     )
                                 }
                                 composable(
@@ -319,7 +418,12 @@ fun GMusicRoot(
                                         },
                                         onNavigateToAlbum = navigateToAlbum,
                                         onNavigateToArtist = navigateToArtist,
-                                        modifier = Modifier.statusBarsPadding()
+                                        modifier = Modifier
+                                            .statusBarsPadding()
+                                            .padding(
+                                                start = if (isLandscape) contentStartPadding else 0.dp,
+                                                end = if (isLandscape) contentEndPadding else 0.dp
+                                            )
                                     )
                                 }
                                 composable("settings") {
@@ -336,76 +440,177 @@ fun GMusicRoot(
                                             navController.popBackStack()
                                         },
                                         onBack = { navController.popBackStack() },
-                                        modifier = Modifier.statusBarsPadding()
+                                        modifier = Modifier
+                                            .statusBarsPadding()
+                                            .padding(
+                                                start = if (isLandscape) contentStartPadding else 0.dp,
+                                                end = if (isLandscape) contentEndPadding else 0.dp
+                                            )
                                     )
                                 }
                             }
                         }
 
                         // Floating Player + Floating Pill Navigation Bar
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .align(Alignment.BottomCenter)
-                                .navigationBarsPadding()
-                                .background(Color.Transparent)
-                        ) {
-                            if (playerState.currentTrack != null) {
-                                MiniPlayerBar(
-                                    state = playerState,
-                                    onTogglePlayPause = playerViewModel::togglePlayPause,
-                                    onToggleLike = playerViewModel::toggleCurrentTrackLike,
-                                    onSkipNext = playerViewModel::skipNext,
-                                    onSkipPrevious = playerViewModel::skipPrevious,
-                                    onDismissStop = playerViewModel::stopAndDismiss,
-                                    onOpenFullPlayer = playerViewModel::openFullScreenPlayer,
-                                    sharedTransitionScope = this@SharedTransitionLayout,
-                                    animatedVisibilityScope = this@AnimatedContent
-                                )
-                            }
-                            Surface(
+                        if (dockAlignment == Alignment.BottomCenter) {
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 20.dp, vertical = 6.dp)
-                                    .height(62.dp),
+                                    .align(Alignment.BottomCenter)
+                                    .navigationBarsPadding()
+                                    .background(Color.Transparent)
+                            ) {
+                                if (playerState.currentTrack != null) {
+                                    MiniPlayerBar(
+                                        state = playerState,
+                                        onTogglePlayPause = playerViewModel::togglePlayPause,
+                                        onToggleLike = playerViewModel::toggleCurrentTrackLike,
+                                        onSkipNext = playerViewModel::skipNext,
+                                        onSkipPrevious = playerViewModel::skipPrevious,
+                                        onDismissStop = playerViewModel::stopAndDismiss,
+                                        onOpenFullPlayer = playerViewModel::openFullScreenPlayer,
+                                        sharedTransitionScope = this@SharedTransitionLayout,
+                                        animatedVisibilityScope = this@AnimatedContent
+                                    )
+                                }
+                                Surface(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 20.dp, vertical = 6.dp)
+                                        .height(if (isLandscape) 56.dp else 62.dp),
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.surfaceContainer,
+                                    tonalElevation = 6.dp,
+                                    shadowElevation = 8.dp
+                                ) {
+                                    NavigationBar(
+                                        containerColor = Color.Transparent,
+                                        modifier = Modifier.fillMaxSize(),
+                                        windowInsets = WindowInsets(0, 0, 0, 0)
+                                    ) {
+                                        TopLevelDestination.entries.forEach { destination ->
+                                            val selected = currentRoute == destination.route
+                                            NavigationBarItem(
+                                                selected = selected,
+                                                alwaysShowLabel = true,
+                                                onClick = {
+                                                    // Torna istantaneamente alla pagina base della tab, chiudendo qualsiasi sotto-schermo
+                                                    navController.navigate(destination.route) {
+                                                        popUpTo(navController.graph.id) {
+                                                            inclusive = false
+                                                        }
+                                                        launchSingleTop = true
+                                                    }
+                                                },
+                                                icon = {
+                                                    Icon(
+                                                        imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
+                                                        contentDescription = stringResource(destination.labelRes),
+                                                        modifier = Modifier.size(22.dp)
+                                                    )
+                                                },
+                                                label = {
+                                                    Text(
+                                                        text = stringResource(destination.labelRes),
+                                                        style = MaterialTheme.typography.labelSmall
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            // Landscape Dock ancorato al lato fisico inferiore del device
+                            if (playerState.currentTrack != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .align(Alignment.BottomCenter)
+                                        .navigationBarsPadding()
+                                        .padding(
+                                            start = contentStartPadding,
+                                            end = contentEndPadding,
+                                            bottom = 8.dp
+                                        )
+                                ) {
+                                    MiniPlayerBar(
+                                        state = playerState,
+                                        onTogglePlayPause = playerViewModel::togglePlayPause,
+                                        onToggleLike = playerViewModel::toggleCurrentTrackLike,
+                                        onSkipNext = playerViewModel::skipNext,
+                                        onSkipPrevious = playerViewModel::skipPrevious,
+                                        onDismissStop = playerViewModel::stopAndDismiss,
+                                        onOpenFullPlayer = playerViewModel::openFullScreenPlayer,
+                                        sharedTransitionScope = this@SharedTransitionLayout,
+                                        animatedVisibilityScope = this@AnimatedContent
+                                    )
+                                }
+                            }
+
+                            Surface(
+                                modifier = Modifier
+                                    .align(dockAlignment)
+                                    .padding(
+                                        start = if (dockAlignment == Alignment.CenterStart) 10.dp else 0.dp,
+                                        end = if (dockAlignment == Alignment.CenterEnd) 10.dp else 0.dp
+                                    )
+                                    .navigationBarsPadding()
+                                    .displayCutoutPadding()
+                                    .width(66.dp),
                                 shape = CircleShape,
                                 color = MaterialTheme.colorScheme.surfaceContainer,
                                 tonalElevation = 6.dp,
                                 shadowElevation = 8.dp
                             ) {
-                                NavigationBar(
-                                    containerColor = Color.Transparent,
-                                    modifier = Modifier.fillMaxSize(),
-                                    windowInsets = WindowInsets(0, 0, 0, 0)
+                                Column(
+                                    modifier = Modifier.padding(vertical = 14.dp, horizontal = 4.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
                                     TopLevelDestination.entries.forEach { destination ->
                                         val selected = currentRoute == destination.route
-                                        NavigationBarItem(
-                                            selected = selected,
-                                            alwaysShowLabel = true,
-                                            onClick = {
-                                                // Torna istantaneamente alla pagina base della tab, chiudendo qualsiasi sotto-schermo
-                                                navController.navigate(destination.route) {
-                                                    popUpTo(navController.graph.id) {
-                                                        inclusive = false
+                                        Column(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(16.dp))
+                                                .clickable {
+                                                    navController.navigate(destination.route) {
+                                                        popUpTo(navController.graph.id) {
+                                                            inclusive = false
+                                                        }
+                                                        launchSingleTop = true
                                                     }
-                                                    launchSingleTop = true
                                                 }
-                                            },
-                                            icon = {
+                                                .padding(horizontal = 4.dp, vertical = 6.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(width = 46.dp, height = 30.dp)
+                                                    .clip(CircleShape)
+                                                    .background(
+                                                        if (selected) MaterialTheme.colorScheme.secondaryContainer
+                                                        else Color.Transparent
+                                                    ),
+                                                contentAlignment = Alignment.Center
+                                            ) {
                                                 Icon(
                                                     imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
                                                     contentDescription = stringResource(destination.labelRes),
+                                                    tint = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
+                                                    else MaterialTheme.colorScheme.onSurfaceVariant,
                                                     modifier = Modifier.size(22.dp)
                                                 )
-                                            },
-                                            label = {
-                                                Text(
-                                                    text = stringResource(destination.labelRes),
-                                                    style = MaterialTheme.typography.labelSmall
-                                                )
                                             }
-                                        )
+                                            Spacer(modifier = Modifier.height(3.dp))
+                                            Text(
+                                                text = stringResource(destination.labelRes),
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = if (selected) MaterialTheme.colorScheme.onSurface
+                                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                maxLines = 1
+                                            )
+                                        }
                                     }
                                 }
                             }

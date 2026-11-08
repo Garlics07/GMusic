@@ -1,5 +1,8 @@
 package com.gmusic.app.ui.home
 
+import android.content.res.Configuration
+import androidx.compose.ui.platform.LocalConfiguration
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -60,6 +63,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -93,6 +97,8 @@ fun HomeScreen(
     onPlayTrack: (Track, List<Track>) -> Unit,
     onNavigateToArtist: (String, String) -> Unit,
     onNavigateToAlbum: (String, String) -> Unit,
+    contentStartPadding: Dp = 16.dp,
+    contentEndPadding: Dp = 16.dp,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
@@ -182,11 +188,14 @@ fun HomeScreen(
                         }
                     }
                 }
-                val rowCount = (gridEntries.size + 1) / 2
+                val configuration = LocalConfiguration.current
+                val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+                val gridColumns = if (isLandscape) 3 else 2
+                val rowCount = (gridEntries.size + gridColumns - 1) / gridColumns
                 val minHeaderHeight = when (rowCount) {
                     0 -> 180.dp
                     1 -> 240.dp
-                    2 -> 300.dp
+                    2 -> 290.dp
                     else -> 360.dp
                 }
 
@@ -215,7 +224,7 @@ fun HomeScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
+                                .padding(start = contentStartPadding, end = contentEndPadding),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
@@ -266,10 +275,10 @@ fun HomeScreen(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 16.dp),
+                                    .padding(start = contentStartPadding, end = contentEndPadding),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                val rows = gridEntries.chunked(2)
+                                val rows = gridEntries.chunked(gridColumns)
                                 for (rowItems in rows) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -313,8 +322,10 @@ fun HomeScreen(
                                                 }
                                             }
                                         }
-                                        if (rowItems.size == 1) {
-                                            Spacer(modifier = Modifier.weight(1f))
+                                        if (rowItems.size < gridColumns) {
+                                            repeat(gridColumns - rowItems.size) {
+                                                Spacer(modifier = Modifier.weight(1f))
+                                            }
                                         }
                                     }
                                 }
@@ -331,6 +342,8 @@ fun HomeScreen(
             ) { section ->
                 HomeShelfSection(
                     section = section,
+                    contentStartPadding = contentStartPadding,
+                    contentEndPadding = contentEndPadding,
                     onSongLongClick = { selectedTrackForMenu = it },
                     onItemClick = { item ->
                         when (item.type) {
@@ -659,6 +672,8 @@ private fun ArtistGridCard(
 @Composable
 private fun HomeShelfSection(
     section: HomeSection,
+    contentStartPadding: Dp = 16.dp,
+    contentEndPadding: Dp = 16.dp,
     onItemClick: (HomeShelfItem) -> Unit,
     onSongLongClick: ((Track) -> Unit)? = null
 ) {
@@ -684,7 +699,7 @@ private fun HomeShelfSection(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp)) {
+        Column(modifier = Modifier.padding(start = contentStartPadding, end = contentEndPadding)) {
             val localizedSubtitle = when (section.subtitle?.trim()) {
                 "FATTO PER TE", "MADE FOR YOU", "CONÇU POUR VOUS", "HECHO PARA TI" -> stringResource(R.string.home_made_for_you_label)
                 "ASCOLTO OFFLINE", "OFFLINE LISTENING", "ÉCOUTE HORS CONNEXION", "ESCUCHA SIN CONEXIÓN" -> stringResource(R.string.library_downloads)
@@ -730,7 +745,7 @@ private fun HomeShelfSection(
         }
 
         LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
+            contentPadding = PaddingValues(start = contentStartPadding, end = contentEndPadding),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(

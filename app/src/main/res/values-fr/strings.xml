@@ -51,7 +51,7 @@
     <string name="filter_playlists">Playlists</string>
 
     <!-- Bibliothèque et Playlists -->
-    <string name="library_title">Votre bibliothèque</string>
+    <string name="library_title">Bibliothèque</string>
     <string name="library_history_title">Historique d\'écoute</string>
     <string name="library_clear_history">Effacer l\'historique</string>
     <string name="library_clear_history_confirm">Voulez-vous effacer votre historique d\'écoute ?</string>
@@ -103,6 +103,7 @@
     <string name="player_now_playing">En cours de lecture</string>
     <string name="player_queue">File d\'attente</string>
     <string name="player_lyrics">Paroles</string>
+    <string name="no_lyrics_available">Aucune parole disponible</string>
     <string name="player_add_to_playlist">Ajouter à une playlist</string>
     <string name="player_download">Télécharger le titre</string>
     <string name="player_like">Ajouter aux favoris</string>
