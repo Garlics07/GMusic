@@ -189,7 +189,9 @@
     <string name="menu_download_track">Scarica brano</string>
     <string name="menu_remove_download">Elimina download</string>
     <string name="downloading_in_progress">Download in corso…</string>
-    <string name="settings_changelog_v289_title">v2.8.9 (Attuale) - Integrazione Link YouTube Music &amp; Condivisione</string>
+    <string name="settings_changelog_v295_title">v2.9.5 (Attuale) - Ottimizzazione Impostazioni &amp; Tema Automatico</string>
+    <string name="settings_changelog_v295_desc">• Rimozione opzioni tema e colori manuali dalle impostazioni: l\'app gestisce ora automaticamente i colori dinamici di sistema Material You (Monet) e l\'adattamento cromatico alla copertina\n• Riorganizzazione impostazioni audio con crossfade unificato\n• Aggiornamento di stabilità e prestazioni</string>
+    <string name="settings_changelog_v289_title">v2.8.9 - Integrazione Link YouTube Music &amp; Condivisione</string>
     <string name="settings_changelog_v289_desc">• Apertura diretta dei link condivisi da YouTube Music e youtu.be in GMusic\n• Riproduzione istantanea con player a schermo intero per i brani condivisi\n• Supporto a playlist, album e canali artista condivisi\n• Aggiornamento in-place Android fluido e garantito</string>
     <string name="settings_changelog_v285_title">v2.8.5 - Ottimizzazione Download &amp; Esperienza</string>
     <string name="settings_changelog_v285_desc">• Animazione interattiva di download nel player a schermo intero\n• Barra di avanzamento in tempo reale nella sezione Canzoni scaricate\n• Tasto scarica aggiunto al menu a 3 puntini delle canzoni\n• Pressione prolungata sulle canzoni in Home per aprire le opzioni brano</string>

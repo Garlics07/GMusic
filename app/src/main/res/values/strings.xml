@@ -189,7 +189,9 @@
     <string name="menu_download_track">Download track</string>
     <string name="menu_remove_download">Delete download</string>
     <string name="downloading_in_progress">Downloading…</string>
-    <string name="settings_changelog_v289_title">v2.8.9 (Current) - YouTube Music Deep Links &amp; Sharing</string>
+    <string name="settings_changelog_v295_title">v2.9.5 (Current) - Settings Refinement &amp; Automatic Theme</string>
+    <string name="settings_changelog_v295_desc">• Removed manual theme/color options from settings: the app automatically manages system Material You (Monet) dynamic colors and adaptive artwork palette\n• Consolidated audio settings with unified crossfade control\n• Stability and performance optimizations</string>
+    <string name="settings_changelog_v289_title">v2.8.9 - YouTube Music Deep Links &amp; Sharing</string>
     <string name="settings_changelog_v289_desc">• Open shared YouTube Music and youtu.be links directly in GMusic\n• Immediate playback &amp; full-screen player for shared songs\n• Support for shared playlists, albums and artist channels\n• Seamless in-place Android app update</string>
     <string name="settings_changelog_v285_title">v2.8.5 - Download Experience &amp; Improvements</string>
     <string name="settings_changelog_v285_desc">• Interactive download animation on full-screen player\n• Real-time progress bar in Downloaded Songs\n• Download action added to 3-dots track options menu\n• Long-press songs on Home to open track options</string>

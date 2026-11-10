@@ -101,7 +101,7 @@ fun rememberHarmonizedPlayerColorScheme(seedColor: Color?): ColorScheme {
         if (seedColor != null) {
             MaterialYouPaletteGenerator.createHarmonizedDarkColorScheme(seedColor)
         } else {
-            MaterialYouPaletteGenerator.createHarmonizedDarkColorScheme(Color(0xFF6750A4))
+            MaterialYouPaletteGenerator.createHarmonizedDarkColorScheme(BrandGreen)
         }
     }
 }

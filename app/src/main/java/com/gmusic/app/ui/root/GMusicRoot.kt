@@ -45,6 +45,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -514,7 +515,14 @@ fun GMusicRoot(
                                                         text = stringResource(destination.labelRes),
                                                         style = MaterialTheme.typography.labelSmall
                                                     )
-                                                }
+                                                },
+                                                colors = NavigationBarItemDefaults.colors(
+                                                    indicatorColor = MaterialTheme.colorScheme.primary,
+                                                    selectedIconColor = Color.White,
+                                                    selectedTextColor = Color.White,
+                                                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
                                             )
                                         }
                                     }
@@ -589,7 +597,7 @@ fun GMusicRoot(
                                                     .size(width = 46.dp, height = 30.dp)
                                                     .clip(CircleShape)
                                                     .background(
-                                                        if (selected) MaterialTheme.colorScheme.secondaryContainer
+                                                        if (selected) MaterialTheme.colorScheme.primary
                                                         else Color.Transparent
                                                     ),
                                                 contentAlignment = Alignment.Center
@@ -597,7 +605,7 @@ fun GMusicRoot(
                                                 Icon(
                                                     imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
                                                     contentDescription = stringResource(destination.labelRes),
-                                                    tint = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
+                                                    tint = if (selected) Color.White
                                                     else MaterialTheme.colorScheme.onSurfaceVariant,
                                                     modifier = Modifier.size(22.dp)
                                                 )
@@ -606,7 +614,7 @@ fun GMusicRoot(
                                             Text(
                                                 text = stringResource(destination.labelRes),
                                                 style = MaterialTheme.typography.labelSmall,
-                                                color = if (selected) MaterialTheme.colorScheme.onSurface
+                                                color = if (selected) Color.White
                                                 else MaterialTheme.colorScheme.onSurfaceVariant,
                                                 maxLines = 1
                                             )

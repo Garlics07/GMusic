@@ -15,11 +15,20 @@ android {
         applicationId = "com.gmusic.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 32
-        versionName = "2.9.2"
+        versionCode = 35
+        versionName = "2.9.5"
 
         vectorDrawables {
             useSupportLibrary = true
+        }
+    }
+
+    signingConfigs {
+        create("shared") {
+            storeFile = rootProject.file("keystore/gmusic.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
         }
     }
 
@@ -31,10 +40,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("shared")
         }
         debug {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("shared")
         }
     }
 

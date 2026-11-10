@@ -138,11 +138,7 @@ fun HomeScreen(
     }
 
     val defaultTint = MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
-    val targetTint = if (state.topDominantColor != null) {
-        state.topDominantColor!!.copy(alpha = 0.52f)
-    } else {
-        defaultTint
-    }
+    val targetTint = defaultTint
     val animatedTopTint by animateColorAsState(
         targetValue = targetTint,
         animationSpec = tween(durationMillis = 650),

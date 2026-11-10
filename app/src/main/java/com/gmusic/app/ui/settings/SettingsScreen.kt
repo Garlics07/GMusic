@@ -125,26 +125,6 @@ fun SettingsScreen(
             }
         }
 
-        // Tema Material You
-        item {
-            SettingsCard(title = stringResource(R.string.settings_theme)) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = stringResource(R.string.settings_theme_dynamic_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = stringResource(R.string.settings_theme_dynamic_desc),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-
         // Crossfade (0..12 s) + Qualità Audio
         item {
             SettingsCard(title = stringResource(R.string.settings_audio_quality)) {

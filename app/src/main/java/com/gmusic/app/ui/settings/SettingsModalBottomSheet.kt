@@ -35,7 +35,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.HighQuality
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Tune
@@ -65,6 +64,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -87,7 +87,6 @@ enum class SettingsSubSection(
     @StringRes val titleRes: Int,
     val icon: ImageVector
 ) {
-    THEME(R.string.settings_theme, Icons.Filled.Palette),
     AUDIO_QUALITY(R.string.settings_audio_quality, Icons.Filled.HighQuality),
     EQUALIZER(R.string.settings_equalizer, Icons.Filled.Tune),
     CACHE(R.string.settings_cache, Icons.Filled.Storage),
@@ -97,7 +96,6 @@ enum class SettingsSubSection(
 @Composable
 private fun getSubSectionSubtitle(sub: SettingsSubSection, settings: com.gmusic.app.data.local.UserSettings, cacheSizeMb: Long): String {
     return when (sub) {
-        SettingsSubSection.THEME -> stringResource(R.string.settings_theme_dynamic_title)
         SettingsSubSection.AUDIO_QUALITY -> if (settings.highAudioQuality) stringResource(R.string.settings_quality_high) else stringResource(R.string.settings_quality_auto)
         SettingsSubSection.EQUALIZER -> if (settings.eqEnabled) "${stringResource(R.string.state_on)} (${settings.eqPresetId})" else stringResource(R.string.state_off)
         SettingsSubSection.CACHE -> "${cacheSizeMb} MB"
@@ -388,13 +386,13 @@ fun SettingsModalBottomSheet(
                                         modifier = Modifier
                                             .size(40.dp)
                                             .clip(RoundedCornerShape(10.dp))
-                                            .background(MaterialTheme.colorScheme.primaryContainer),
+                                            .background(MaterialTheme.colorScheme.primary),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
                                             imageVector = sub.icon,
                                             contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.primary,
+                                            tint = Color.White,
                                             modifier = Modifier.size(22.dp)
                                         )
                                     }
@@ -427,38 +425,33 @@ fun SettingsModalBottomSheet(
                 } else {
                     // Contenuto dinamico della sottosezione selezionata
                     when (section) {
-                        SettingsSubSection.THEME -> {
+                        SettingsSubSection.AUDIO_QUALITY -> {
                             LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                                 item {
                                     Card(
-                                        shape = RoundedCornerShape(16.dp),
+                                        shape = RoundedCornerShape(14.dp),
                                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
                                     ) {
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(18.dp)
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Icon(
-                                                    imageVector = Icons.Filled.Palette,
-                                                    contentDescription = null,
-                                                    tint = MaterialTheme.colorScheme.primary,
-                                                    modifier = Modifier.size(24.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(12.dp))
+                                            Column(modifier = Modifier.weight(1f)) {
                                                 Text(
-                                                    text = stringResource(R.string.settings_theme_dynamic_title),
+                                                    text = stringResource(R.string.settings_quality_high),
                                                     style = MaterialTheme.typography.titleMedium,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = MaterialTheme.colorScheme.onSurface
+                                                    fontWeight = FontWeight.SemiBold
+                                                )
+                                                Text(
+                                                    text = stringResource(R.string.settings_quality_high_desc),
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                                 )
                                             }
-                                            Spacer(modifier = Modifier.height(8.dp))
-                                            Text(
-                                                text = stringResource(R.string.settings_theme_dynamic_desc),
-                                                style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            Switch(
+                                                checked = settings.highAudioQuality,
+                                                onCheckedChange = viewModel::setHighAudioQuality
                                             )
                                         }
                                     }
@@ -491,40 +484,6 @@ fun SettingsModalBottomSheet(
                                                 onValueChange = { viewModel.setCrossfadeSeconds(it.roundToInt()) },
                                                 valueRange = 0f..12f,
                                                 steps = 11
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        SettingsSubSection.AUDIO_QUALITY -> {
-                            LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                                item {
-                                    Card(
-                                        shape = RoundedCornerShape(14.dp),
-                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Column(modifier = Modifier.weight(1f)) {
-                                                Text(
-                                                    text = stringResource(R.string.settings_quality_high),
-                                                    style = MaterialTheme.typography.titleMedium,
-                                                    fontWeight = FontWeight.SemiBold
-                                                )
-                                                Text(
-                                                    text = stringResource(R.string.settings_quality_high_desc),
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                )
-                                            }
-                                            Switch(
-                                                checked = settings.highAudioQuality,
-                                                onCheckedChange = viewModel::setHighAudioQuality
                                             )
                                         }
                                     }
@@ -760,6 +719,22 @@ fun SettingsModalBottomSheet(
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
                                     )
+                                }
+
+                                item {
+                                    Card(
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                                    ) {
+                                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Text(text = stringResource(R.string.settings_changelog_v295_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                            Text(
+                                                text = stringResource(R.string.settings_changelog_v295_desc),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
                                 }
 
                                 item {
