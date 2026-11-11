@@ -6,9 +6,11 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +42,7 @@ import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -320,11 +323,19 @@ fun SettingsModalBottomSheet(
                                         Spacer(modifier = Modifier.width(12.dp))
 
                                         // Sign Out a destra
+                                        val isDark = isSystemInDarkTheme()
                                         OutlinedButton(
                                             onClick = viewModel::logout,
-                                            shape = RoundedCornerShape(12.dp)
+                                            shape = RoundedCornerShape(12.dp),
+                                            border = BorderStroke(1.dp, if (isDark) Color.White.copy(alpha = 0.6f) else MaterialTheme.colorScheme.outline),
+                                            colors = ButtonDefaults.outlinedButtonColors(
+                                                contentColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                                            )
                                         ) {
-                                            Text(stringResource(R.string.settings_logout))
+                                            Text(
+                                                text = stringResource(R.string.settings_logout),
+                                                color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                                            )
                                         }
                                     } else {
                                         // Modalità Ospite / Login
@@ -474,7 +485,7 @@ fun SettingsModalBottomSheet(
                                                 Text(
                                                     text = "${settings.crossfadeSeconds}s",
                                                     style = MaterialTheme.typography.bodyMedium,
-                                                    color = MaterialTheme.colorScheme.primary,
+                                                    color = MaterialTheme.colorScheme.onSurface,
                                                     fontWeight = FontWeight.Bold
                                                 )
                                             }
@@ -489,11 +500,19 @@ fun SettingsModalBottomSheet(
                                     }
                                 }
                                 item {
+                                    val isDark = isSystemInDarkTheme()
                                     OutlinedButton(
                                         onClick = { showInstancesDialog = true },
-                                        modifier = Modifier.fillMaxWidth()
+                                        modifier = Modifier.fillMaxWidth(),
+                                        border = BorderStroke(1.dp, if (isDark) Color.White.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outline),
+                                        colors = ButtonDefaults.outlinedButtonColors(
+                                            contentColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                                        )
                                     ) {
-                                        Text(stringResource(R.string.settings_instances))
+                                        Text(
+                                            text = stringResource(R.string.settings_instances),
+                                            color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                                        )
                                     }
                                 }
                             }
@@ -529,7 +548,8 @@ fun SettingsModalBottomSheet(
                                         Text(
                                             text = stringResource(R.string.settings_eq_presets),
                                             style = MaterialTheme.typography.titleSmall,
-                                            color = MaterialTheme.colorScheme.primary
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                         Spacer(modifier = Modifier.height(6.dp))
                                         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -592,7 +612,12 @@ fun SettingsModalBottomSheet(
                                     }
 
                                     item {
-                                        Text(text = stringResource(R.string.settings_frequency_bands), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                                        Text(
+                                            text = stringResource(R.string.settings_frequency_bands),
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
                                     }
 
                                     items(BAND_LABELS.indices.toList()) { index ->
@@ -639,7 +664,7 @@ fun SettingsModalBottomSheet(
                                             Text(
                                                 text = stringResource(R.string.settings_cache_used_format, cacheSizeMb),
                                                 style = MaterialTheme.typography.bodyLarge,
-                                                color = MaterialTheme.colorScheme.primary,
+                                                color = MaterialTheme.colorScheme.onSurface,
                                                 fontWeight = FontWeight.Bold
                                             )
                                             Text(
@@ -653,19 +678,31 @@ fun SettingsModalBottomSheet(
                                 item {
                                     Button(
                                         onClick = viewModel::clearAudioCache,
-                                        modifier = Modifier.fillMaxWidth()
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = MaterialTheme.colorScheme.primary,
+                                            contentColor = Color.White
+                                        )
                                     ) {
-                                        Icon(imageVector = Icons.Filled.Delete, contentDescription = null)
+                                        Icon(imageVector = Icons.Filled.Delete, contentDescription = null, tint = Color.White)
                                         Spacer(modifier = Modifier.width(8.dp))
-                                        Text(stringResource(R.string.settings_clear_cache))
+                                        Text(stringResource(R.string.settings_clear_cache), color = Color.White)
                                     }
                                 }
                                 item {
+                                    val isDark = isSystemInDarkTheme()
                                     OutlinedButton(
                                         onClick = viewModel::deleteAllDownloads,
-                                        modifier = Modifier.fillMaxWidth()
+                                        modifier = Modifier.fillMaxWidth(),
+                                        border = BorderStroke(1.dp, if (isDark) Color.White.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outline),
+                                        colors = ButtonDefaults.outlinedButtonColors(
+                                            contentColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                                        )
                                     ) {
-                                        Text(stringResource(R.string.settings_delete_downloads))
+                                        Text(
+                                            text = stringResource(R.string.settings_delete_downloads),
+                                            color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                                        )
                                     }
                                 }
                             }
@@ -694,7 +731,7 @@ fun SettingsModalBottomSheet(
                                                 text = "GMusic",
                                                 style = MaterialTheme.typography.headlineMedium,
                                                 fontWeight = FontWeight.Bold,
-                                                color = MaterialTheme.colorScheme.primary
+                                                color = MaterialTheme.colorScheme.onSurface
                                             )
                                             Text(
                                                 text = stringResource(R.string.settings_version_format, com.gmusic.app.BuildConfig.VERSION_NAME),
@@ -717,8 +754,24 @@ fun SettingsModalBottomSheet(
                                         text = stringResource(R.string.settings_changelog_title),
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary
+                                        color = MaterialTheme.colorScheme.onSurface
                                     )
+                                }
+
+                                item {
+                                    Card(
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                                    ) {
+                                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Text(text = stringResource(R.string.settings_changelog_v302_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                            Text(
+                                                text = stringResource(R.string.settings_changelog_v302_desc),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
                                 }
 
                                 item {

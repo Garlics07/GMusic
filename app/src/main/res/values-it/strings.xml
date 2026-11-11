@@ -143,7 +143,7 @@
     <string name="settings_account">Account YouTube Music</string>
     <string name="settings_login">Accedi con Google</string>
     <string name="settings_paste_cookie">Incolla cookie manualmente</string>
-    <string name="settings_logout">Esci dall\'account</string>
+    <string name="settings_logout">Esci</string>
     <string name="settings_about">Informazioni su GMusic</string>
 
     <!-- Widget -->
@@ -197,7 +197,9 @@
     <string name="menu_download_track">Scarica brano</string>
     <string name="menu_remove_download">Elimina download</string>
     <string name="downloading_in_progress">Download in corso…</string>
-    <string name="settings_changelog_v301_title">v3.0.1 (Attuale) - Tema Material 3 &amp; Miglioramenti UI/UX</string>
+    <string name="settings_changelog_v302_title">v3.0.2 (Attuale) - Raffinamento UI &amp; Correzioni Interfaccia</string>
+    <string name="settings_changelog_v302_desc">• Rimozione del gradiente in testata Home per un design flat minimale\n• Sfondi categorie libreria a tinta unita verde brand\n• Risolto il bug di navigazione rapida tra le sezioni della libreria\n• Eliminati i testi scuri e bottoni ad alto contrasto nelle impostazioni\n• Pulsanti secondari con bordo e testo bianco in modalità scura per Album, Artisti e Playlist</string>
+    <string name="settings_changelog_v301_title">v3.0.1 - Tema Material 3 &amp; Miglioramenti UI/UX</string>
     <string name="settings_changelog_v301_desc">• Palette Material 3 con verde brand unificato sia in modalità chiara sia in modalità scura\n• Risolto il glitch visivo del logo app sotto al player durante lo scorrimento\n• Ottimizzazioni prestazionali per WavySlider e scorrimento testi sincronizzati\n• Risolti i margini inferiori per il mini-player e aggiunto dialogo di conferma eliminazione playlist</string>
     <string name="settings_changelog_v295_title">v2.9.5 - Ottimizzazione Impostazioni &amp; Tema Automatico</string>
     <string name="settings_changelog_v295_desc">• Rimozione opzioni tema e colori manuali dalle impostazioni: l\'app gestisce ora automaticamente i colori dinamici di sistema Material You (Monet) e l\'adattamento cromatico alla copertina\n• Riorganizzazione impostazioni audio con crossfade unificato\n• Aggiornamento di stabilità e prestazioni</string>

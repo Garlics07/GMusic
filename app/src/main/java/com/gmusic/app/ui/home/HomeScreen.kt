@@ -137,13 +137,6 @@ fun HomeScreen(
         }
     }
 
-    val defaultTint = MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
-    val targetTint = defaultTint
-    val animatedTopTint by animateColorAsState(
-        targetValue = targetTint,
-        animationSpec = tween(durationMillis = 650),
-        label = "homeTopTint"
-    )
     val backgroundColor = MaterialTheme.colorScheme.background
 
     PullToRefreshBox(
@@ -199,14 +192,7 @@ fun HomeScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = minHeaderHeight)
-                        .background(
-                            Brush.verticalGradient(
-                                0.0f to animatedTopTint.copy(alpha = 0.60f),
-                                0.35f to animatedTopTint.copy(alpha = 0.28f),
-                                0.70f to animatedTopTint.copy(alpha = 0.08f),
-                                1.0f to Color.Transparent
-                            )
-                        )
+                        .background(backgroundColor)
                         .padding(bottom = 12.dp)
                 ) {
                     Column(

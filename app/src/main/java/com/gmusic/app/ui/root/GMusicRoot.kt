@@ -155,6 +155,16 @@ fun GMusicRoot(
     val navigateToArtist: (String, String) -> Unit = { id, name ->
         navController.navigate("artist/${Uri.encode(id)}?name=${Uri.encode(name)}")
     }
+    val navigateFromLibrary: (String) -> Unit = { route ->
+        if (navController.currentBackStackEntry?.destination?.route == TopLevelDestination.LIBRARY.route) {
+            navController.navigate(route) {
+                launchSingleTop = true
+            }
+        }
+    }
+    val popBackToLibrary: () -> Unit = {
+        navController.popBackStack(TopLevelDestination.LIBRARY.route, inclusive = false)
+    }
 
     LaunchedEffect(Unit) {
         playerViewModel.uiEvents.collect { event ->
@@ -255,18 +265,18 @@ fun GMusicRoot(
                                 }
                                 composable(TopLevelDestination.LIBRARY.route) {
                                     LibraryScreen(
-                                        onOpenLikedSongs = { navController.navigate("liked_songs") },
-                                        onOpenPlaylists = { navController.navigate("library_playlists") },
-                                        onOpenArtists = { navController.navigate("library_artists") },
-                                        onOpenAlbums = { navController.navigate("library_albums") },
-                                        onOpenDownloadedSongs = { navController.navigate("downloaded_songs") },
+                                        onOpenLikedSongs = { navigateFromLibrary("liked_songs") },
+                                        onOpenPlaylists = { navigateFromLibrary("library_playlists") },
+                                        onOpenArtists = { navigateFromLibrary("library_artists") },
+                                        onOpenAlbums = { navigateFromLibrary("library_albums") },
+                                        onOpenDownloadedSongs = { navigateFromLibrary("downloaded_songs") },
                                         onOpenPlaylist = { playlistId ->
-                                            navController.navigate("playlist/${Uri.encode(playlistId)}")
+                                            navigateFromLibrary("playlist/${Uri.encode(playlistId)}")
                                         },
                                         onOpenAlbum = navigateToAlbum,
                                         onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
                                         onOpenArtist = navigateToArtist,
-                                        onOpenHistory = { navController.navigate("history") },
+                                        onOpenHistory = { navigateFromLibrary("history") },
                                         modifier = Modifier
                                             .statusBarsPadding()
                                             .padding(
@@ -277,7 +287,7 @@ fun GMusicRoot(
                                 }
                                 composable("library_playlists") {
                                     LibraryPlaylistsScreen(
-                                        onBack = { navController.popBackStack() },
+                                        onBack = popBackToLibrary,
                                         onOpenPlaylist = { playlistId ->
                                             navController.navigate("playlist/${Uri.encode(playlistId)}")
                                         },
@@ -291,7 +301,7 @@ fun GMusicRoot(
                                 }
                                 composable("library_artists") {
                                     LibraryArtistsScreen(
-                                        onBack = { navController.popBackStack() },
+                                        onBack = popBackToLibrary,
                                         onOpenArtist = navigateToArtist,
                                         modifier = Modifier
                                             .statusBarsPadding()
@@ -303,7 +313,7 @@ fun GMusicRoot(
                                 }
                                 composable("library_albums") {
                                     LibraryAlbumsScreen(
-                                        onBack = { navController.popBackStack() },
+                                        onBack = popBackToLibrary,
                                         onOpenAlbum = navigateToAlbum,
                                         modifier = Modifier
                                             .statusBarsPadding()
@@ -315,7 +325,7 @@ fun GMusicRoot(
                                 }
                                 composable("history") {
                                     HistoryScreen(
-                                        onBack = { navController.popBackStack() },
+                                        onBack = popBackToLibrary,
                                         onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
                                         onNavigateToArtist = navigateToArtist,
                                         onNavigateToAlbum = navigateToAlbum,
@@ -329,7 +339,7 @@ fun GMusicRoot(
                                 }
                                 composable("liked_songs") {
                                     LikedSongsScreen(
-                                        onBack = { navController.popBackStack() },
+                                        onBack = popBackToLibrary,
                                         onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
                                         onNavigateToArtist = navigateToArtist,
                                         onNavigateToAlbum = navigateToAlbum,
@@ -343,7 +353,7 @@ fun GMusicRoot(
                                 }
                                 composable("downloaded_songs") {
                                     DownloadedSongsScreen(
-                                        onBack = { navController.popBackStack() },
+                                        onBack = popBackToLibrary,
                                         onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
                                         onNavigateToArtist = navigateToArtist,
                                         onNavigateToAlbum = navigateToAlbum,

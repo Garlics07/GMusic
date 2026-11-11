@@ -1,5 +1,11 @@
 package com.gmusic.app.ui.album
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.graphics.Color
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -250,16 +256,28 @@ fun AlbumScreen(
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(stringResource(R.string.action_play_all))
                         }
-                        FilledTonalButton(
+                        val isDark = isSystemInDarkTheme()
+                        OutlinedButton(
                             onClick = {
                                 val shuffled = currentDetail.tracks.shuffled()
                                 onPlayTrack(shuffled.first(), shuffled)
                             },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            border = BorderStroke(1.dp, if (isDark) Color.White else MaterialTheme.colorScheme.outline),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                            )
                         ) {
-                            Icon(imageVector = Icons.Filled.Shuffle, contentDescription = null)
+                            Icon(
+                                imageVector = Icons.Filled.Shuffle,
+                                contentDescription = null,
+                                tint = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                            )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(stringResource(R.string.action_shuffle_play))
+                            Text(
+                                text = stringResource(R.string.action_shuffle_play),
+                                color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                            )
                         }
                     }
                 }

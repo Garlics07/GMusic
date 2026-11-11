@@ -1,5 +1,11 @@
 package com.gmusic.app.ui.artist
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.graphics.Color
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -245,20 +251,26 @@ fun ArtistScreen(
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(stringResource(R.string.action_shuffle_play))
                         }
-                        FilledTonalButton(
+                        val isDark = isSystemInDarkTheme()
+                        OutlinedButton(
                             onClick = { viewModel.toggleSaveArtist(current) },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            border = BorderStroke(1.dp, if (isDark) Color.White else MaterialTheme.colorScheme.outline),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                            )
                         ) {
                             Icon(
                                 imageVector = if (isSaved) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                                 contentDescription = null,
-                                tint = if (isSaved) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = if (isSaved) MaterialTheme.colorScheme.primary else (if (isDark) Color.White else MaterialTheme.colorScheme.onSurface)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = stringResource(
                                     if (isSaved) R.string.artist_following else R.string.artist_follow
-                                )
+                                ),
+                                color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }

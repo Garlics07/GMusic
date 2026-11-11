@@ -135,7 +135,7 @@
     <string name="settings_account">Cuenta de YouTube Music</string>
     <string name="settings_login">Iniciar sesión con Google</string>
     <string name="settings_paste_cookie">Pegar cookie manualmente</string>
-    <string name="settings_logout">Cerrar sesión</string>
+    <string name="settings_logout">Salir</string>
     <string name="settings_about">Acerca de GMusic</string>
 
     <!-- Widget -->
@@ -189,7 +189,9 @@
     <string name="menu_download_track">Descargar canción</string>
     <string name="menu_remove_download">Eliminar descarga</string>
     <string name="downloading_in_progress">Descargando…</string>
-    <string name="settings_changelog_v301_title">v3.0.1 (Actual) - Tema Material 3 &amp; Mejoras UI/UX</string>
+    <string name="settings_changelog_v302_title">v3.0.2 (Actual) - Refinamiento UI &amp; Correcciones de Interfaz</string>
+    <string name="settings_changelog_v302_desc">• Eliminación del degradado en Inicio para un diseño plano y limpio\n• Fondos de categorías de biblioteca en verde marca sólido\n• Corrección del error de navegación rápida entre categorías de biblioteca\n• Textos oscuros eliminados y botones de alto contraste en ajustes\n• Botones secundarios con borde y texto blanco en tema oscuro para Álbumes, Artistas y Listas</string>
+    <string name="settings_changelog_v301_title">v3.0.1 - Tema Material 3 &amp; Mejoras UI/UX</string>
     <string name="settings_changelog_v301_desc">• Paleta Material 3 con verde de marca unificado en temas claro y oscuro\n• Corrección del problema visual donde el logo aparecía debajo del reproductor\n• Optimizaciones de rendimiento en WavySlider y letras sincronizadas\n• Márgenes corregidos para el mini-reproductor y diálogo de confirmación para eliminar listas</string>
     <string name="settings_changelog_v295_title">v2.9.5 - Optimización de Ajustes &amp; Tema Automático</string>
     <string name="settings_changelog_v295_desc">• Eliminación de opciones manuales de tema y colores: la aplicación aplica automáticamente colores dinámicos de sistema Material You (Monet) y paleta de carátula\n• Reorganización de ajustes de audio con control de crossfade unificado\n• Optimizaciones de estabilidad y rendimiento</string>

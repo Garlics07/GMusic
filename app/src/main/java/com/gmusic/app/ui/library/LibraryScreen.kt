@@ -1,8 +1,10 @@
 package com.gmusic.app.ui.library
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,12 +43,14 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -165,7 +169,8 @@ fun LibraryHubCard(
     title: String,
     subtitle: String,
     icon: ImageVector,
-    gradientColors: List<Color>,
+    containerColor: Color = MaterialTheme.colorScheme.primary,
+    iconTint: Color = MaterialTheme.colorScheme.onPrimary,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -188,13 +193,13 @@ fun LibraryHubCard(
                 modifier = Modifier
                     .size(56.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Brush.linearGradient(gradientColors)),
+                    .background(containerColor),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimary,
+                    tint = iconTint,
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -256,11 +261,6 @@ fun LibraryScreen(
         }
     }
 
-    val hubSquareGradient = listOf(
-        MaterialTheme.colorScheme.primary,
-        MaterialTheme.colorScheme.tertiary
-    )
-
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 180.dp),
@@ -300,7 +300,8 @@ fun LibraryScreen(
                 title = stringResource(R.string.library_liked_songs),
                 subtitle = stringResource(R.string.library_liked_subtitle, likedTracks.size),
                 icon = Icons.Filled.Favorite,
-                gradientColors = hubSquareGradient,
+                containerColor = MaterialTheme.colorScheme.primary,
+                iconTint = MaterialTheme.colorScheme.onPrimary,
                 onClick = onOpenLikedSongs
             )
         }
@@ -312,7 +313,8 @@ fun LibraryScreen(
                 title = stringResource(R.string.filter_playlists),
                 subtitle = stringResource(R.string.library_hub_playlists_subtitle, totalPlaylists),
                 icon = Icons.AutoMirrored.Filled.QueueMusic,
-                gradientColors = hubSquareGradient,
+                containerColor = MaterialTheme.colorScheme.primary,
+                iconTint = MaterialTheme.colorScheme.onPrimary,
                 onClick = onOpenPlaylists
             )
         }
@@ -323,7 +325,8 @@ fun LibraryScreen(
                 title = stringResource(R.string.filter_artists),
                 subtitle = stringResource(R.string.library_hub_artists_subtitle, savedArtists.size),
                 icon = Icons.Filled.Person,
-                gradientColors = hubSquareGradient,
+                containerColor = MaterialTheme.colorScheme.primary,
+                iconTint = MaterialTheme.colorScheme.onPrimary,
                 onClick = onOpenArtists
             )
         }
@@ -334,7 +337,8 @@ fun LibraryScreen(
                 title = stringResource(R.string.filter_albums),
                 subtitle = stringResource(R.string.library_hub_albums_subtitle, savedAlbums.size),
                 icon = Icons.Filled.Album,
-                gradientColors = hubSquareGradient,
+                containerColor = MaterialTheme.colorScheme.primary,
+                iconTint = MaterialTheme.colorScheme.onPrimary,
                 onClick = onOpenAlbums
             )
         }
@@ -345,7 +349,8 @@ fun LibraryScreen(
                 title = stringResource(R.string.library_downloaded_songs),
                 subtitle = stringResource(R.string.library_downloads_subtitle, downloadedTracks.size),
                 icon = Icons.Filled.DownloadDone,
-                gradientColors = hubSquareGradient,
+                containerColor = MaterialTheme.colorScheme.primary,
+                iconTint = MaterialTheme.colorScheme.onPrimary,
                 onClick = onOpenDownloadedSongs
             )
         }
@@ -735,14 +740,7 @@ fun LikedSongsScreen(
                     modifier = Modifier
                         .size(140.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.tertiary
-                                )
-                            )
-                        ),
+                        .background(MaterialTheme.colorScheme.primary),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -778,16 +776,28 @@ fun LikedSongsScreen(
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(stringResource(R.string.action_play_all))
                     }
-                    FilledTonalButton(
+                    val isDark = isSystemInDarkTheme()
+                    OutlinedButton(
                         onClick = {
                             val shuffled = filteredTracks.shuffled()
                             onPlayTrack(shuffled.first(), shuffled)
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        border = BorderStroke(1.dp, if (isDark) Color.White else MaterialTheme.colorScheme.outline),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                        )
                     ) {
-                        Icon(imageVector = Icons.Filled.Shuffle, contentDescription = null)
+                        Icon(
+                            imageVector = Icons.Filled.Shuffle,
+                            contentDescription = null,
+                            tint = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                        )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(R.string.action_shuffle_play))
+                        Text(
+                            text = stringResource(R.string.action_shuffle_play),
+                            color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 }
             }
@@ -873,14 +883,7 @@ fun DownloadedSongsScreen(
                     modifier = Modifier
                         .size(140.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(
-                                    MaterialTheme.colorScheme.primary,
-                                    MaterialTheme.colorScheme.tertiary
-                                )
-                            )
-                        ),
+                        .background(MaterialTheme.colorScheme.primary),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -916,16 +919,28 @@ fun DownloadedSongsScreen(
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(stringResource(R.string.action_play_all))
                     }
-                    FilledTonalButton(
+                    val isDark = isSystemInDarkTheme()
+                    OutlinedButton(
                         onClick = {
                             val shuffled = filteredTracks.shuffled()
                             onPlayTrack(shuffled.first(), shuffled)
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        border = BorderStroke(1.dp, if (isDark) Color.White else MaterialTheme.colorScheme.outline),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                        )
                     ) {
-                        Icon(imageVector = Icons.Filled.Shuffle, contentDescription = null)
+                        Icon(
+                            imageVector = Icons.Filled.Shuffle,
+                            contentDescription = null,
+                            tint = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                        )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(R.string.action_shuffle_play))
+                        Text(
+                            text = stringResource(R.string.action_shuffle_play),
+                            color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 }
             }
@@ -1175,15 +1190,27 @@ fun PlaylistDetailScreen(
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(stringResource(R.string.action_shuffle_play))
                     }
-                    FilledTonalButton(
+                    val isDark = isSystemInDarkTheme()
+                    OutlinedButton(
                         onClick = {
                             viewModel.downloadTracks(filteredTracks)
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        border = BorderStroke(1.dp, if (isDark) Color.White else MaterialTheme.colorScheme.outline),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                        )
                     ) {
-                        Icon(imageVector = Icons.Filled.Download, contentDescription = null)
+                        Icon(
+                            imageVector = Icons.Filled.Download,
+                            contentDescription = null,
+                            tint = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                        )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text(stringResource(R.string.action_download_playlist))
+                        Text(
+                            text = stringResource(R.string.action_download_playlist),
+                            color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 }
             }
@@ -1325,16 +1352,28 @@ fun HistoryScreen(
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(stringResource(R.string.action_play_all))
                         }
-                        FilledTonalButton(
+                        val isDark = isSystemInDarkTheme()
+                        OutlinedButton(
                             onClick = {
                                 val shuffled = historyTracks.shuffled()
                                 onPlayTrack(shuffled.first(), shuffled)
                             },
-                            modifier = Modifier.weight(1f)
+                            modifier = Modifier.weight(1f),
+                            border = BorderStroke(1.dp, if (isDark) Color.White else MaterialTheme.colorScheme.outline),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                            )
                         ) {
-                            Icon(imageVector = Icons.Filled.Shuffle, contentDescription = null)
+                            Icon(
+                                imageVector = Icons.Filled.Shuffle,
+                                contentDescription = null,
+                                tint = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                            )
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text(stringResource(R.string.action_shuffle_play))
+                            Text(
+                                text = stringResource(R.string.action_shuffle_play),
+                                color = if (isDark) Color.White else MaterialTheme.colorScheme.onSurface
+                            )
                         }
                     }
                 }

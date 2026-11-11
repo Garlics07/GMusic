@@ -135,7 +135,7 @@
     <string name="settings_account">Compte YouTube Music</string>
     <string name="settings_login">Se connecter avec Google</string>
     <string name="settings_paste_cookie">Coller le cookie manuellement</string>
-    <string name="settings_logout">Déconnexion</string>
+    <string name="settings_logout">Quitter</string>
     <string name="settings_about">À propos de GMusic</string>
 
     <!-- Widget -->
@@ -189,7 +189,9 @@
     <string name="menu_download_track">Télécharger le titre</string>
     <string name="menu_remove_download">Supprimer le téléchargement</string>
     <string name="downloading_in_progress">Téléchargement en cours…</string>
-    <string name="settings_changelog_v301_title">v3.0.1 (Actuelle) - Thème Material 3 &amp; Améliorations UI/UX</string>
+    <string name="settings_changelog_v302_title">v3.0.2 (Actuelle) - Raffinement UI &amp; Améliorations de l\'Interface</string>
+    <string name="settings_changelog_v302_desc">• Suppression du dégradé en haut de l\'Accueil pour un design épuré\n• Fond des catégories de la bibliothèque en vert marque uni\n• Correction du bug de navigation rapide entre les catégories de la bibliothèque\n• Suppression des textes sombres et boutons à haut contraste dans les paramètres\n• Boutons secondaires avec bordure et texte blancs en mode sombre pour Albums, Artistes et Playlists</string>
+    <string name="settings_changelog_v301_title">v3.0.1 - Thème Material 3 &amp; Améliorations UI/UX</string>
     <string name="settings_changelog_v301_desc">• Palette Material 3 avec vert de marque unifié en modes clair et sombre\n• Correction du problème visuel où le logo apparaissait sous le lecteur\n• Optimisations de performances pour WavySlider et paroles synchronisées\n• Marges corrigées pour le mini-lecteur et boîte de dialogue de confirmation de suppression de playlist</string>
     <string name="settings_changelog_v295_title">v2.9.5 - Optimisation des Paramètres &amp; Thème Automatique</string>
     <string name="settings_changelog_v295_desc">• Suppression des options manuelles de thème et de couleurs : l\'application gère automatiquement les couleurs dynamiques système Material You (Monet) et la palette de pochette\n• Réorganisation des paramètres audio avec fondu enchaîné unifié\n• Optimisations de stabilité et de performances</string>
