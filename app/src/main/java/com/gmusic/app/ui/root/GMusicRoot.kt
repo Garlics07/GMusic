@@ -11,6 +11,9 @@ import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -155,15 +158,18 @@ fun GMusicRoot(
     val navigateToArtist: (String, String) -> Unit = { id, name ->
         navController.navigate("artist/${Uri.encode(id)}?name=${Uri.encode(name)}")
     }
+    var lastNavTime by remember { mutableStateOf(0L) }
     val navigateFromLibrary: (String) -> Unit = { route ->
-        if (navController.currentBackStackEntry?.destination?.route == TopLevelDestination.LIBRARY.route) {
+        val now = System.currentTimeMillis()
+        if (now - lastNavTime > 300L) {
+            lastNavTime = now
             navController.navigate(route) {
+                popUpTo(TopLevelDestination.LIBRARY.route) {
+                    inclusive = false
+                }
                 launchSingleTop = true
             }
         }
-    }
-    val popBackToLibrary: () -> Unit = {
-        navController.popBackStack(TopLevelDestination.LIBRARY.route, inclusive = false)
     }
 
     LaunchedEffect(Unit) {
@@ -232,7 +238,11 @@ fun GMusicRoot(
                             NavHost(
                                 navController = navController,
                                 startDestination = TopLevelDestination.HOME.route,
-                                modifier = Modifier.fillMaxSize()
+                                modifier = Modifier.fillMaxSize(),
+                                enterTransition = { fadeIn(animationSpec = tween(150)) },
+                                exitTransition = { fadeOut(animationSpec = tween(150)) },
+                                popEnterTransition = { fadeIn(animationSpec = tween(150)) },
+                                popExitTransition = { fadeOut(animationSpec = tween(150)) }
                             ) {
                                 composable(TopLevelDestination.HOME.route) {
                                     HomeScreen(
@@ -287,7 +297,7 @@ fun GMusicRoot(
                                 }
                                 composable("library_playlists") {
                                     LibraryPlaylistsScreen(
-                                        onBack = popBackToLibrary,
+                                        onBack = { navController.popBackStack() },
                                         onOpenPlaylist = { playlistId ->
                                             navController.navigate("playlist/${Uri.encode(playlistId)}")
                                         },
@@ -301,7 +311,7 @@ fun GMusicRoot(
                                 }
                                 composable("library_artists") {
                                     LibraryArtistsScreen(
-                                        onBack = popBackToLibrary,
+                                        onBack = { navController.popBackStack() },
                                         onOpenArtist = navigateToArtist,
                                         modifier = Modifier
                                             .statusBarsPadding()
@@ -313,7 +323,7 @@ fun GMusicRoot(
                                 }
                                 composable("library_albums") {
                                     LibraryAlbumsScreen(
-                                        onBack = popBackToLibrary,
+                                        onBack = { navController.popBackStack() },
                                         onOpenAlbum = navigateToAlbum,
                                         modifier = Modifier
                                             .statusBarsPadding()
@@ -325,7 +335,7 @@ fun GMusicRoot(
                                 }
                                 composable("history") {
                                     HistoryScreen(
-                                        onBack = popBackToLibrary,
+                                        onBack = { navController.popBackStack() },
                                         onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
                                         onNavigateToArtist = navigateToArtist,
                                         onNavigateToAlbum = navigateToAlbum,
@@ -339,7 +349,7 @@ fun GMusicRoot(
                                 }
                                 composable("liked_songs") {
                                     LikedSongsScreen(
-                                        onBack = popBackToLibrary,
+                                        onBack = { navController.popBackStack() },
                                         onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
                                         onNavigateToArtist = navigateToArtist,
                                         onNavigateToAlbum = navigateToAlbum,
@@ -353,7 +363,7 @@ fun GMusicRoot(
                                 }
                                 composable("downloaded_songs") {
                                     DownloadedSongsScreen(
-                                        onBack = popBackToLibrary,
+                                        onBack = { navController.popBackStack() },
                                         onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
                                         onNavigateToArtist = navigateToArtist,
                                         onNavigateToAlbum = navigateToAlbum,

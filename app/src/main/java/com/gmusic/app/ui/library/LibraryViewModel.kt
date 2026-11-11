@@ -64,21 +64,17 @@ class LibraryViewModel @Inject constructor(
     private val _selectedPlaylist = MutableStateFlow<Pair<PlaylistSummary?, List<Track>>>(null to emptyList())
     val selectedPlaylist: StateFlow<Pair<PlaylistSummary?, List<Track>>> = _selectedPlaylist.asStateFlow()
 
-    init {
-        syncRemoteLibrary()
-    }
-
     fun clearHistory() {
         viewModelScope.launch {
             musicRepository.clearPlayHistory()
         }
     }
 
-    fun syncRemoteLibrary() {
+    fun syncRemoteLibrary(force: Boolean = false) {
         viewModelScope.launch {
             _isSyncing.value = true
             try {
-                musicRepository.syncRemoteLibraryIfLoggedIn()
+                musicRepository.syncRemoteLibraryIfLoggedIn(force)
             } finally {
                 _isSyncing.value = false
             }

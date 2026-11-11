@@ -764,6 +764,22 @@ fun SettingsModalBottomSheet(
                                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                                     ) {
                                         Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Text(text = stringResource(R.string.settings_changelog_v303_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                            Text(
+                                                text = stringResource(R.string.settings_changelog_v303_desc),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+
+                                item {
+                                    Card(
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                                    ) {
+                                        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                             Text(text = stringResource(R.string.settings_changelog_v302_title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                                             Text(
                                                 text = stringResource(R.string.settings_changelog_v302_desc),

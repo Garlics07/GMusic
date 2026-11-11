@@ -189,7 +189,9 @@
     <string name="menu_download_track">Télécharger le titre</string>
     <string name="menu_remove_download">Supprimer le téléchargement</string>
     <string name="downloading_in_progress">Téléchargement en cours…</string>
-    <string name="settings_changelog_v302_title">v3.0.2 (Actuelle) - Raffinement UI &amp; Améliorations de l\'Interface</string>
+    <string name="settings_changelog_v303_title">v3.0.3 (Actuelle) - Réactivité de Navigation &amp; UI Accueil</string>
+    <string name="settings_changelog_v303_desc">• Fond de la carte Titres Likés sur l\'Accueil en vert marque uni\n• Transitions de navigation rapides de 150ms dans toute l\'application\n• Protection contre les clics accidentels en quittant les catégories de la bibliothèque\n• Navigation fluide et immédiate avec nettoyage automatique de l\'historique\n• Optimisation de la synchronisation réduisant les requêtes réseau et base de données</string>
+    <string name="settings_changelog_v302_title">v3.0.2 - Raffinement UI &amp; Améliorations de l\'Interface</string>
     <string name="settings_changelog_v302_desc">• Suppression du dégradé en haut de l\'Accueil pour un design épuré\n• Fond des catégories de la bibliothèque en vert marque uni\n• Correction du bug de navigation rapide entre les catégories de la bibliothèque\n• Suppression des textes sombres et boutons à haut contraste dans les paramètres\n• Boutons secondaires avec bordure et texte blancs en mode sombre pour Albums, Artistes et Playlists</string>
     <string name="settings_changelog_v301_title">v3.0.1 - Thème Material 3 &amp; Améliorations UI/UX</string>
     <string name="settings_changelog_v301_desc">• Palette Material 3 avec vert de marque unifié en modes clair et sombre\n• Correction du problème visuel où le logo apparaissait sous le lecteur\n• Optimisations de performances pour WavySlider et paroles synchronisées\n• Marges corrigées pour le mini-lecteur et boîte de dialogue de confirmation de suppression de playlist</string>

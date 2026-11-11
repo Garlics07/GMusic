@@ -197,7 +197,9 @@
     <string name="menu_download_track">Download track</string>
     <string name="menu_remove_download">Delete download</string>
     <string name="downloading_in_progress">Downloading…</string>
-    <string name="settings_changelog_v302_title">v3.0.2 (Current) - UI Refinement &amp; Interface Fixes</string>
+    <string name="settings_changelog_v303_title">v3.0.3 (Current) - Navigation Responsiveness &amp; Home UI Fixes</string>
+    <string name="settings_changelog_v303_desc">• Solid brand green background for Liked Songs card on Home\n• Snappy 150ms navigation transitions across the entire app\n• Touch guard during category exit preventing accidental song playback or album opening\n• Smooth and immediate Library navigation with automatic backstack cleanup\n• Optimized library sync reducing network requests and database overhead</string>
+    <string name="settings_changelog_v302_title">v3.0.2 - UI Refinement &amp; Interface Fixes</string>
     <string name="settings_changelog_v302_desc">• Removed top header gradient on Home for a clean flat design\n• Solid brand green background for library category cards\n• Fixed rapid category switching navigation bug in Library\n• Eliminated low-contrast dark texts and improved button styling in settings\n• Secondary action buttons with white border and text in Dark mode for Albums, Artists and Playlists</string>
     <string name="settings_changelog_v301_title">v3.0.1 - Material 3 Theme &amp; UI/UX Improvements</string>
     <string name="settings_changelog_v301_desc">• Unified brand green palette across Light and Dark themes (Material 3)\n• Fixed splash logo leaking behind the player during gesture swipe/drag\n• Performance enhancements on WavySlider and synchronized lyrics\n• Fixed mini-player content insets and added playlist delete confirmation</string>

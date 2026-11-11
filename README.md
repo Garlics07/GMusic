@@ -116,7 +116,7 @@ L'APK compilato viene generato in:
 
 ##### Installazione rapida via ADB:
 ```bash
-adb install -r "GMusic 3.0.2.apk"
+adb install -r "GMusic 3.0.3.apk"
 ```
 
 ---
@@ -220,7 +220,7 @@ The compiled APK will be generated at:
 
 ##### Quick Install via ADB
 ```bash
-adb install -r "GMusic 3.0.2.apk"
+adb install -r "GMusic 3.0.3.apk"
 ```
 
 ---

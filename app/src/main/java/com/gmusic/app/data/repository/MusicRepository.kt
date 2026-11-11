@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -74,6 +75,8 @@ class MusicRepository @Inject constructor(
     val accountName: StateFlow<String?> = _accountName.asStateFlow()
 
     private val artistDiscographyCache = ConcurrentHashMap<String, List<Track>>()
+    private var lastRemoteSyncTimestamp: Long = 0L
+    private val syncRemoteMutex = Mutex()
 
     val isLoggedIn: StateFlow<Boolean> = authCredentialStore.isLoggedIn
 
@@ -115,14 +118,22 @@ class MusicRepository @Inject constructor(
      * Sincronizza Cronologia, Canzoni Preferite, Playlist, Album Preferiti, Artisti Preferiti e Avatar
      * dell'account YouTube Music quando l'utente è autenticato.
      */
-    suspend fun syncRemoteLibraryIfLoggedIn() = withContext(Dispatchers.IO) {
+    suspend fun syncRemoteLibraryIfLoggedIn(force: Boolean = false) = withContext(Dispatchers.IO) {
         if (!authCredentialStore.hasValidCookie()) {
             _remotePlaylists.value = emptyList()
             _accountAvatarUrl.value = null
             _accountName.value = null
             return@withContext
         }
+        val now = System.currentTimeMillis()
+        if (!force && (now - lastRemoteSyncTimestamp < 60_000L)) {
+            return@withContext
+        }
+        if (!syncRemoteMutex.tryLock()) {
+            return@withContext
+        }
         try {
+            lastRemoteSyncTimestamp = now
             coroutineScope {
                 val accountInfoDeferred = async { innerTubeClient.fetchAccountInfo() }
                 val likesDeferred = async { innerTubeClient.fetchAccountLikedTracks() }
@@ -192,6 +203,8 @@ class MusicRepository @Inject constructor(
             }
         } catch (e: Exception) {
             Log.w(TAG, "Errore sincronizzazione libreria YouTube Music: ${e.message}")
+        } finally {
+            syncRemoteMutex.unlock()
         }
     }
 

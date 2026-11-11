@@ -1,5 +1,6 @@
 package com.gmusic.app.ui.library
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -364,6 +365,17 @@ fun LibraryPlaylistsScreen(
     modifier: Modifier = Modifier,
     viewModel: LibraryViewModel = hiltViewModel()
 ) {
+    var isExiting by remember { mutableStateOf(false) }
+    val handleBack = {
+        if (!isExiting) {
+            isExiting = true
+            onBack()
+        }
+    }
+    BackHandler(enabled = !isExiting) {
+        handleBack()
+    }
+
     val isLoggedIn by viewModel.isLoggedIn.collectAsStateWithLifecycle()
     val localPlaylists by viewModel.localPlaylists.collectAsStateWithLifecycle()
     val remotePlaylists by viewModel.remotePlaylists.collectAsStateWithLifecycle()
@@ -423,7 +435,7 @@ fun LibraryPlaylistsScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onBack) {
+                IconButton(onClick = handleBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = null,
@@ -475,7 +487,7 @@ fun LibraryPlaylistsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .clickable { onOpenPlaylist(pl.id) }
+                    .clickable(enabled = !isExiting) { onOpenPlaylist(pl.id) }
                     .padding(vertical = 6.dp, horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -513,6 +525,17 @@ fun LibraryArtistsScreen(
     modifier: Modifier = Modifier,
     viewModel: LibraryViewModel = hiltViewModel()
 ) {
+    var isExiting by remember { mutableStateOf(false) }
+    val handleBack = {
+        if (!isExiting) {
+            isExiting = true
+            onBack()
+        }
+    }
+    BackHandler(enabled = !isExiting) {
+        handleBack()
+    }
+
     val savedArtists by viewModel.savedArtists.collectAsStateWithLifecycle()
     var searchQuery by remember { mutableStateOf("") }
     val filteredArtists = remember(savedArtists, searchQuery) {
@@ -530,7 +553,7 @@ fun LibraryArtistsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onBack) {
+                IconButton(onClick = handleBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = null,
@@ -560,7 +583,7 @@ fun LibraryArtistsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .clickable { onOpenArtist(artist.id, artist.name) }
+                    .clickable(enabled = !isExiting) { onOpenArtist(artist.id, artist.name) }
                     .padding(vertical = 6.dp, horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -602,6 +625,17 @@ fun LibraryAlbumsScreen(
     modifier: Modifier = Modifier,
     viewModel: LibraryViewModel = hiltViewModel()
 ) {
+    var isExiting by remember { mutableStateOf(false) }
+    val handleBack = {
+        if (!isExiting) {
+            isExiting = true
+            onBack()
+        }
+    }
+    BackHandler(enabled = !isExiting) {
+        handleBack()
+    }
+
     val savedAlbums by viewModel.savedAlbums.collectAsStateWithLifecycle()
     var searchQuery by remember { mutableStateOf("") }
     val filteredAlbums = remember(savedAlbums, searchQuery) {
@@ -621,7 +655,7 @@ fun LibraryAlbumsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onBack) {
+                IconButton(onClick = handleBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = null,
@@ -651,7 +685,7 @@ fun LibraryAlbumsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .clickable { onOpenAlbum(album.id, album.title) }
+                    .clickable(enabled = !isExiting) { onOpenAlbum(album.id, album.title) }
                     .padding(vertical = 6.dp, horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -694,6 +728,17 @@ fun LikedSongsScreen(
     modifier: Modifier = Modifier,
     viewModel: LibraryViewModel = hiltViewModel()
 ) {
+    var isExiting by remember { mutableStateOf(false) }
+    val handleBack = {
+        if (!isExiting) {
+            isExiting = true
+            onBack()
+        }
+    }
+    BackHandler(enabled = !isExiting) {
+        handleBack()
+    }
+
     val likedTracks by viewModel.likedTracks.collectAsStateWithLifecycle()
     val playlists by viewModel.playlists.collectAsStateWithLifecycle()
     var trackForPlaylistDialog by remember { mutableStateOf<Track?>(null) }
@@ -722,7 +767,7 @@ fun LikedSongsScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            IconButton(onClick = onBack) {
+            IconButton(onClick = handleBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = null,
@@ -769,7 +814,8 @@ fun LikedSongsScreen(
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button(
-                        onClick = { onPlayTrack(filteredTracks.first(), filteredTracks) },
+                        onClick = { if (!isExiting) onPlayTrack(filteredTracks.first(), filteredTracks) },
+                        enabled = !isExiting,
                         modifier = Modifier.weight(1f)
                     ) {
                         Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null)
@@ -779,9 +825,12 @@ fun LikedSongsScreen(
                     val isDark = isSystemInDarkTheme()
                     OutlinedButton(
                         onClick = {
-                            val shuffled = filteredTracks.shuffled()
-                            onPlayTrack(shuffled.first(), shuffled)
+                            if (!isExiting) {
+                                val shuffled = filteredTracks.shuffled()
+                                onPlayTrack(shuffled.first(), shuffled)
+                            }
                         },
+                        enabled = !isExiting,
                         modifier = Modifier.weight(1f),
                         border = BorderStroke(1.dp, if (isDark) Color.White else MaterialTheme.colorScheme.outline),
                         colors = ButtonDefaults.outlinedButtonColors(
@@ -814,7 +863,7 @@ fun LikedSongsScreen(
             items(filteredTracks, key = { it.id }) { track ->
                 TrackRowWithMenu(
                     track = track,
-                    onPlay = { onPlayTrack(track, filteredTracks) },
+                    onPlay = { if (!isExiting) onPlayTrack(track, filteredTracks) },
                     onToggleLike = viewModel::toggleLike,
                     onAddToPlaylistRequest = { trackForPlaylistDialog = it },
                     onDownloadRequest = viewModel::downloadTrack,
@@ -836,6 +885,17 @@ fun DownloadedSongsScreen(
     modifier: Modifier = Modifier,
     viewModel: LibraryViewModel = hiltViewModel()
 ) {
+    var isExiting by remember { mutableStateOf(false) }
+    val handleBack = {
+        if (!isExiting) {
+            isExiting = true
+            onBack()
+        }
+    }
+    BackHandler(enabled = !isExiting) {
+        handleBack()
+    }
+
     val downloadedTracks by viewModel.downloadedTracks.collectAsStateWithLifecycle()
     val downloadProgressMap by viewModel.downloadProgress.collectAsStateWithLifecycle()
     val playlists by viewModel.playlists.collectAsStateWithLifecycle()
@@ -865,7 +925,7 @@ fun DownloadedSongsScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            IconButton(onClick = onBack) {
+            IconButton(onClick = handleBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = null,
@@ -912,7 +972,8 @@ fun DownloadedSongsScreen(
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button(
-                        onClick = { onPlayTrack(filteredTracks.first(), filteredTracks) },
+                        onClick = { if (!isExiting) onPlayTrack(filteredTracks.first(), filteredTracks) },
+                        enabled = !isExiting,
                         modifier = Modifier.weight(1f)
                     ) {
                         Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null)
@@ -922,9 +983,12 @@ fun DownloadedSongsScreen(
                     val isDark = isSystemInDarkTheme()
                     OutlinedButton(
                         onClick = {
-                            val shuffled = filteredTracks.shuffled()
-                            onPlayTrack(shuffled.first(), shuffled)
+                            if (!isExiting) {
+                                val shuffled = filteredTracks.shuffled()
+                                onPlayTrack(shuffled.first(), shuffled)
+                            }
                         },
+                        enabled = !isExiting,
                         modifier = Modifier.weight(1f),
                         border = BorderStroke(1.dp, if (isDark) Color.White else MaterialTheme.colorScheme.outline),
                         colors = ButtonDefaults.outlinedButtonColors(
@@ -961,7 +1025,7 @@ fun DownloadedSongsScreen(
                 Column(modifier = Modifier.fillMaxWidth()) {
                     TrackRowWithMenu(
                         track = track,
-                        onPlay = { onPlayTrack(track, filteredTracks) },
+                        onPlay = { if (!isExiting) onPlayTrack(track, filteredTracks) },
                         onToggleLike = viewModel::toggleLike,
                         onAddToPlaylistRequest = { trackForPlaylistDialog = it },
                         onDownloadRequest = viewModel::downloadTrack,
@@ -1020,6 +1084,17 @@ fun PlaylistDetailScreen(
     modifier: Modifier = Modifier,
     viewModel: LibraryViewModel = hiltViewModel()
 ) {
+    var isExiting by remember { mutableStateOf(false) }
+    val handleBack = {
+        if (!isExiting) {
+            isExiting = true
+            onBack()
+        }
+    }
+    BackHandler(enabled = !isExiting) {
+        handleBack()
+    }
+
     LaunchedEffect(playlistId) {
         viewModel.observePlaylist(playlistId)
     }
@@ -1122,7 +1197,7 @@ fun PlaylistDetailScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onBack) {
+                IconButton(onClick = handleBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = null,
@@ -1181,9 +1256,12 @@ fun PlaylistDetailScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button(
                         onClick = {
-                            val shuffled = filteredTracks.shuffled()
-                            onPlayTrack(shuffled.first(), shuffled)
+                            if (!isExiting) {
+                                val shuffled = filteredTracks.shuffled()
+                                onPlayTrack(shuffled.first(), shuffled)
+                            }
                         },
+                        enabled = !isExiting,
                         modifier = Modifier.weight(1f)
                     ) {
                         Icon(imageVector = Icons.Filled.Shuffle, contentDescription = null)
@@ -1193,8 +1271,11 @@ fun PlaylistDetailScreen(
                     val isDark = isSystemInDarkTheme()
                     OutlinedButton(
                         onClick = {
-                            viewModel.downloadTracks(filteredTracks)
+                            if (!isExiting) {
+                                viewModel.downloadTracks(filteredTracks)
+                            }
                         },
+                        enabled = !isExiting,
                         modifier = Modifier.weight(1f),
                         border = BorderStroke(1.dp, if (isDark) Color.White else MaterialTheme.colorScheme.outline),
                         colors = ButtonDefaults.outlinedButtonColors(
@@ -1227,7 +1308,7 @@ fun PlaylistDetailScreen(
             items(filteredTracks, key = { it.id }) { track ->
                 TrackRowWithMenu(
                     track = track,
-                    onPlay = { onPlayTrack(track, filteredTracks) },
+                    onPlay = { if (!isExiting) onPlayTrack(track, filteredTracks) },
                     onToggleLike = viewModel::toggleLike,
                     onAddToPlaylistRequest = { trackForPlaylistDialog = it },
                     onDownloadRequest = viewModel::downloadTrack,
@@ -1254,6 +1335,17 @@ fun HistoryScreen(
     modifier: Modifier = Modifier,
     viewModel: LibraryViewModel = hiltViewModel()
 ) {
+    var isExiting by remember { mutableStateOf(false) }
+    val handleBack = {
+        if (!isExiting) {
+            isExiting = true
+            onBack()
+        }
+    }
+    BackHandler(enabled = !isExiting) {
+        handleBack()
+    }
+
     val historyTracks by viewModel.historyTracks.collectAsStateWithLifecycle()
     val playlists by viewModel.playlists.collectAsStateWithLifecycle()
     val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
@@ -1314,7 +1406,7 @@ fun HistoryScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = handleBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null,
@@ -1345,7 +1437,8 @@ fun HistoryScreen(
                 item {
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Button(
-                            onClick = { onPlayTrack(historyTracks.first(), historyTracks) },
+                            onClick = { if (!isExiting) onPlayTrack(historyTracks.first(), historyTracks) },
+                            enabled = !isExiting,
                             modifier = Modifier.weight(1f)
                         ) {
                             Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null)
@@ -1355,9 +1448,12 @@ fun HistoryScreen(
                         val isDark = isSystemInDarkTheme()
                         OutlinedButton(
                             onClick = {
-                                val shuffled = historyTracks.shuffled()
-                                onPlayTrack(shuffled.first(), shuffled)
+                                if (!isExiting) {
+                                    val shuffled = historyTracks.shuffled()
+                                    onPlayTrack(shuffled.first(), shuffled)
+                                }
                             },
+                            enabled = !isExiting,
                             modifier = Modifier.weight(1f),
                             border = BorderStroke(1.dp, if (isDark) Color.White else MaterialTheme.colorScheme.outline),
                             colors = ButtonDefaults.outlinedButtonColors(
@@ -1381,7 +1477,7 @@ fun HistoryScreen(
                 items(historyTracks, key = { "hist_${it.id}" }) { track ->
                     TrackRowWithMenu(
                         track = track,
-                        onPlay = { onPlayTrack(track, historyTracks) },
+                        onPlay = { if (!isExiting) onPlayTrack(track, historyTracks) },
                         onToggleLike = viewModel::toggleLike,
                         onAddToPlaylistRequest = { trackForPlaylistDialog = it },
                         onDownloadRequest = viewModel::downloadTrack,
