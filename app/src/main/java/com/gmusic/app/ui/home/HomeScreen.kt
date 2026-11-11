@@ -156,7 +156,7 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(backgroundColor),
-            contentPadding = PaddingValues(bottom = 96.dp),
+            contentPadding = PaddingValues(bottom = 180.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // 1. Sezione superiore con gradiente dinamico adattivo alla griglia 3x2 + Top Bar + Chips

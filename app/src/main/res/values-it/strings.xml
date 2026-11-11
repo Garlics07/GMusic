@@ -72,6 +72,7 @@
     <string name="library_playlist_name_hint">Nome della playlist</string>
     <string name="library_rename_playlist">Rinomina playlist</string>
     <string name="library_delete_playlist">Elimina playlist</string>
+    <string name="action_delete">Elimina</string>
     <string name="library_empty_playlists">Nessuna playlist creata. Tocca Nuova playlist per iniziare.</string>
     <string name="library_empty_tracks">Nessun brano presente in questa raccolta.</string>
     <string name="library_track_count">%1$d brani</string>
@@ -110,6 +111,13 @@
     <string name="player_unlike">Rimuovi dai preferiti</string>
     <string name="player_shuffle">Riproduzione casuale</string>
     <string name="player_repeat">Ripeti</string>
+    <string name="player_play">Riproduci</string>
+    <string name="player_pause">Pausa</string>
+    <string name="player_skip_next">Brano successivo</string>
+    <string name="player_skip_previous">Brano precedente</string>
+    <string name="action_more_options">Altre opzioni</string>
+    <string name="library_delete_playlist_confirm_message">Sei sicuro di voler eliminare questa playlist? L\'azione non può essere annullata.</string>
+    <string name="search_no_results">Nessun risultato trovato</string>
     <string name="error_stream_resolved_skip">Impossibile riprodurre il brano, passo al successivo…</string>
     <string name="added_to_playlist_toast">Brano aggiunto alla playlist</string>
 
@@ -189,7 +197,9 @@
     <string name="menu_download_track">Scarica brano</string>
     <string name="menu_remove_download">Elimina download</string>
     <string name="downloading_in_progress">Download in corso…</string>
-    <string name="settings_changelog_v295_title">v2.9.5 (Attuale) - Ottimizzazione Impostazioni &amp; Tema Automatico</string>
+    <string name="settings_changelog_v301_title">v3.0.1 (Attuale) - Tema Material 3 &amp; Miglioramenti UI/UX</string>
+    <string name="settings_changelog_v301_desc">• Palette Material 3 con verde brand unificato sia in modalità chiara sia in modalità scura\n• Risolto il glitch visivo del logo app sotto al player durante lo scorrimento\n• Ottimizzazioni prestazionali per WavySlider e scorrimento testi sincronizzati\n• Risolti i margini inferiori per il mini-player e aggiunto dialogo di conferma eliminazione playlist</string>
+    <string name="settings_changelog_v295_title">v2.9.5 - Ottimizzazione Impostazioni &amp; Tema Automatico</string>
     <string name="settings_changelog_v295_desc">• Rimozione opzioni tema e colori manuali dalle impostazioni: l\'app gestisce ora automaticamente i colori dinamici di sistema Material You (Monet) e l\'adattamento cromatico alla copertina\n• Riorganizzazione impostazioni audio con crossfade unificato\n• Aggiornamento di stabilità e prestazioni</string>
     <string name="settings_changelog_v289_title">v2.8.9 - Integrazione Link YouTube Music &amp; Condivisione</string>
     <string name="settings_changelog_v289_desc">• Apertura diretta dei link condivisi da YouTube Music e youtu.be in GMusic\n• Riproduzione istantanea con player a schermo intero per i brani condivisi\n• Supporto a playlist, album e canali artista condivisi\n• Aggiornamento in-place Android fluido e garantito</string>

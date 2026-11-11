@@ -88,10 +88,13 @@ class ArtistViewModel @Inject constructor(
 
     fun loadArtist(artistId: String, nameHint: String) {
         viewModelScope.launch {
-            val det = musicRepository.fetchArtistDetail(artistId, nameHint)
-            _detail.value = det
-            val fullTracks = musicRepository.fetchArtistDiscography(artistId, det.name.ifBlank { nameHint })
-            _discography.value = fullTracks
+            try {
+                val det = musicRepository.fetchArtistDetail(artistId, nameHint)
+                _detail.value = det
+                val fullTracks = musicRepository.fetchArtistDiscography(artistId, det.name.ifBlank { nameHint })
+                _discography.value = fullTracks
+            } catch (_: Exception) {
+            }
         }
         viewModelScope.launch {
             musicRepository.observeIsArtistSaved(artistId).collectLatest { saved ->
@@ -175,7 +178,7 @@ fun ArtistScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 180.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {

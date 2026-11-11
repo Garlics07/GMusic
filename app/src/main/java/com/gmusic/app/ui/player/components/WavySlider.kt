@@ -7,8 +7,8 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -70,39 +70,39 @@ fun WavySlider(
         label = "wavePhase"
     )
 
+    // Riutilizzo del Path per evitare continue allocazioni a 60/120 FPS nello scope di disegno (Zero GC churn)
+    val wavePath = remember { Path() }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(36.dp)
             .pointerInput(enabled) {
                 if (!enabled) return@pointerInput
-                detectTapGestures { offset ->
-                    val fraction = (offset.x / size.width).coerceIn(0f, 1f)
-                    onValueChange(fraction)
-                    onValueChangeFinished?.invoke()
-                }
-            }
-            .pointerInput(enabled) {
-                if (!enabled) return@pointerInput
-                detectDragGestures(
-                    onDragStart = { offset ->
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    val width = size.width
+                    if (width > 0) {
                         isDragging = true
-                        dragFraction = (offset.x / size.width).coerceIn(0f, 1f)
+                        dragFraction = (down.position.x / width).coerceIn(0f, 1f)
                         onValueChange(dragFraction)
-                    },
-                    onDragEnd = {
+
+                        val pointerId = down.id
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val change = event.changes.firstOrNull { it.id == pointerId } ?: break
+                            if (change.pressed) {
+                                change.consume()
+                                dragFraction = (change.position.x / width).coerceIn(0f, 1f)
+                                onValueChange(dragFraction)
+                            } else {
+                                break
+                            }
+                        }
                         isDragging = false
                         onValueChangeFinished?.invoke()
-                    },
-                    onDragCancel = {
-                        isDragging = false
-                    },
-                    onDrag = { change, _ ->
-                        change.consume()
-                        dragFraction = (change.position.x / size.width).coerceIn(0f, 1f)
-                        onValueChange(dragFraction)
                     }
-                )
+                }
             }
     ) {
         Canvas(modifier = Modifier.matchParentSize()) {
@@ -129,21 +129,22 @@ fun WavySlider(
             // 2. Traccia Attiva (Da 0 fino al cursore): Sinusoide fluida se c'è ampiezza, altrimenti retta
             if (thumbX > 0f) {
                 if (ampPx > 0.05f) {
-                    val path = Path()
-                    path.moveTo(0f, centerY)
+                    wavePath.rewind()
+                    wavePath.moveTo(0f, centerY)
 
+                    // Campionamento ottimizzato proporzionale alla lunghezza d'onda
+                    val stepPx = (waveLengthPx / 16f).coerceIn(2f, 6f)
                     var x = 0f
-                    val stepPx = 2f
                     while (x <= thumbX) {
                         val angle = (2f * PI.toFloat() * (x / waveLengthPx)) - wavePhase
                         val y = centerY + (ampPx * sin(angle))
-                        path.lineTo(x, y)
+                        wavePath.lineTo(x, y)
                         x += stepPx
                     }
-                    path.lineTo(thumbX, centerY)
+                    wavePath.lineTo(thumbX, centerY)
 
                     drawPath(
-                        path = path,
+                        path = wavePath,
                         color = activeColor,
                         style = Stroke(
                             width = trackStrokePx,

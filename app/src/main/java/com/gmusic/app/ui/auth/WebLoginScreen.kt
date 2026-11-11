@@ -43,6 +43,7 @@ fun WebLoginScreen(
     modifier: Modifier = Modifier
 ) {
     var latestCookies by remember { mutableStateOf("") }
+    var isExtracted by remember { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxSize()) {
         Row(
@@ -66,11 +67,13 @@ fun WebLoginScreen(
             )
             IconButton(
                 onClick = {
+                    if (isExtracted) return@IconButton
                     CookieManager.getInstance().flush()
                     val cookieStr = CookieManager.getInstance()
                         .getCookie("https://music.youtube.com")
                         .orEmpty()
                     if (cookieStr.contains("SAPISID") || cookieStr.contains("3PAPISID")) {
+                        isExtracted = true
                         onCookiesExtracted(cookieStr, null)
                     }
                 }
@@ -101,11 +104,13 @@ fun WebLoginScreen(
                                 .getCookie("https://music.youtube.com")
                                 .orEmpty()
                             latestCookies = cookies
-                            if (url != null &&
+                            if (!isExtracted &&
+                                url != null &&
                                 url.startsWith("https://music.youtube.com") &&
                                 !url.contains("accounts.google.com") &&
                                 (cookies.contains("SAPISID=") || cookies.contains("__Secure-3PAPISID="))
                             ) {
+                                isExtracted = true
                                 view?.evaluateJavascript(
                                     "(window.ytcfg && window.ytcfg.get && window.ytcfg.get('VISITOR_DATA')) || ''"
                                 ) { rawVisitor ->
@@ -123,6 +128,10 @@ fun WebLoginScreen(
 
                     loadUrl("https://accounts.google.com/ServiceLogin?service=youtube&continue=https%3A%2F%2Fmusic.youtube.com")
                 }
+            },
+            onRelease = { webView ->
+                webView.stopLoading()
+                webView.destroy()
             }
         )
     }

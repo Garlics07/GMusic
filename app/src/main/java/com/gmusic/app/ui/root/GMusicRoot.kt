@@ -168,8 +168,12 @@ fun GMusicRoot(
         }
     }
 
-    SharedTransitionLayout {
-        AnimatedContent(
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        SharedTransitionLayout {
+            AnimatedContent(
             targetState = playerState.isFullScreenPlayerOpen && playerState.currentTrack != null,
             label = "playerContainerTransform"
         ) { isFullPlayer ->
@@ -638,3 +642,4 @@ fun GMusicRoot(
             }
         }
     }
+}

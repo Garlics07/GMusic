@@ -189,7 +189,9 @@
     <string name="menu_download_track">Télécharger le titre</string>
     <string name="menu_remove_download">Supprimer le téléchargement</string>
     <string name="downloading_in_progress">Téléchargement en cours…</string>
-    <string name="settings_changelog_v295_title">v2.9.5 (Actuelle) - Optimisation des Paramètres &amp; Thème Automatique</string>
+    <string name="settings_changelog_v301_title">v3.0.1 (Actuelle) - Thème Material 3 &amp; Améliorations UI/UX</string>
+    <string name="settings_changelog_v301_desc">• Palette Material 3 avec vert de marque unifié en modes clair et sombre\n• Correction du problème visuel où le logo apparaissait sous le lecteur\n• Optimisations de performances pour WavySlider et paroles synchronisées\n• Marges corrigées pour le mini-lecteur et boîte de dialogue de confirmation de suppression de playlist</string>
+    <string name="settings_changelog_v295_title">v2.9.5 - Optimisation des Paramètres &amp; Thème Automatique</string>
     <string name="settings_changelog_v295_desc">• Suppression des options manuelles de thème et de couleurs : l\'application gère automatiquement les couleurs dynamiques système Material You (Monet) et la palette de pochette\n• Réorganisation des paramètres audio avec fondu enchaîné unifié\n• Optimisations de stabilité et de performances</string>
     <string name="settings_changelog_v289_title">v2.8.9 - Liens YouTube Music &amp; Partage</string>
     <string name="settings_changelog_v289_desc">• Ouverture directe des liens partagés YouTube Music et youtu.be dans GMusic\n• Lecture immédiate et lecteur plein écran pour les titres partagés\n• Prise en charge des playlists, albums et chaînes d\'artistes\n• Mise à jour Android fluide et sans perte de données</string>

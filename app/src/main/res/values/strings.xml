@@ -72,6 +72,7 @@
     <string name="library_playlist_name_hint">Playlist name</string>
     <string name="library_rename_playlist">Rename Playlist</string>
     <string name="library_delete_playlist">Delete Playlist</string>
+    <string name="action_delete">Delete</string>
     <string name="library_empty_playlists">No playlists yet. Tap New Playlist to get started.</string>
     <string name="library_empty_tracks">No tracks found in this collection.</string>
     <string name="library_track_count">%1$d tracks</string>
@@ -110,6 +111,13 @@
     <string name="player_unlike">Remove from Favorites</string>
     <string name="player_shuffle">Shuffle</string>
     <string name="player_repeat">Repeat</string>
+    <string name="player_play">Play</string>
+    <string name="player_pause">Pause</string>
+    <string name="player_skip_next">Next track</string>
+    <string name="player_skip_previous">Previous track</string>
+    <string name="action_more_options">More options</string>
+    <string name="library_delete_playlist_confirm_message">Are you sure you want to delete this playlist? This action cannot be undone.</string>
+    <string name="search_no_results">No results found</string>
     <string name="error_stream_resolved_skip">Unable to play track, skipping to next…</string>
     <string name="added_to_playlist_toast">Track added to playlist</string>
 
@@ -189,7 +197,9 @@
     <string name="menu_download_track">Download track</string>
     <string name="menu_remove_download">Delete download</string>
     <string name="downloading_in_progress">Downloading…</string>
-    <string name="settings_changelog_v295_title">v2.9.5 (Current) - Settings Refinement &amp; Automatic Theme</string>
+    <string name="settings_changelog_v301_title">v3.0.1 (Current) - Material 3 Theme &amp; UI/UX Improvements</string>
+    <string name="settings_changelog_v301_desc">• Unified brand green palette across Light and Dark themes (Material 3)\n• Fixed splash logo leaking behind the player during gesture swipe/drag\n• Performance enhancements on WavySlider and synchronized lyrics\n• Fixed mini-player content insets and added playlist delete confirmation</string>
+    <string name="settings_changelog_v295_title">v2.9.5 - Settings Refinement &amp; Automatic Theme</string>
     <string name="settings_changelog_v295_desc">• Removed manual theme/color options from settings: the app automatically manages system Material You (Monet) dynamic colors and adaptive artwork palette\n• Consolidated audio settings with unified crossfade control\n• Stability and performance optimizations</string>
     <string name="settings_changelog_v289_title">v2.8.9 - YouTube Music Deep Links &amp; Sharing</string>
     <string name="settings_changelog_v289_desc">• Open shared YouTube Music and youtu.be links directly in GMusic\n• Immediate playback &amp; full-screen player for shared songs\n• Support for shared playlists, albums and artist channels\n• Seamless in-place Android app update</string>

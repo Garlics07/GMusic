@@ -131,15 +131,19 @@ class SearchViewModel @Inject constructor(
         if (saveHistory) {
             musicRepository.saveSearchQuery(cleanQuery)
         }
-        val result = musicRepository.searchAllCategories(cleanQuery, filter.key)
-        _uiState.update {
-            it.copy(
-                isLoading = false,
-                songResults = result.songs,
-                artistResults = result.artists,
-                albumResults = result.albums,
-                playlistResults = result.playlists
-            )
+        try {
+            val result = musicRepository.searchAllCategories(cleanQuery, filter.key)
+            _uiState.update {
+                it.copy(
+                    songResults = result.songs,
+                    artistResults = result.artists,
+                    albumResults = result.albums,
+                    playlistResults = result.playlists
+                )
+            }
+        } catch (_: Exception) {
+        } finally {
+            _uiState.update { it.copy(isLoading = false) }
         }
     }
 

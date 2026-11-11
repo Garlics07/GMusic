@@ -76,6 +76,7 @@ import com.gmusic.app.core.designsystem.rememberHarmonizedPlayerColorScheme
 import com.gmusic.app.ui.player.components.WavySlider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -773,6 +774,7 @@ fun FullScreenPlayerSheet(
                     contentScale = ContentScale.Crop,
                     modifier = artSharedModifier
                         .fillMaxWidth()
+                        .weight(1f, fill = false)
                         .aspectRatio(1f)
                         .clip(MaterialTheme.shapes.extraLarge)
                         .pointerInput(track.id) {
@@ -941,7 +943,7 @@ fun FullScreenPlayerSheet(
                     ) {
                         Icon(
                             imageVector = Icons.Filled.SkipPrevious,
-                            contentDescription = null,
+                            contentDescription = stringResource(R.string.player_skip_previous),
                             modifier = Modifier.size(32.dp),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
@@ -964,7 +966,9 @@ fun FullScreenPlayerSheet(
                         } else {
                             Icon(
                                 imageVector = if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                                contentDescription = null,
+                                contentDescription = stringResource(
+                                    if (state.isPlaying) R.string.player_pause else R.string.player_play
+                                ),
                                 modifier = Modifier.size(38.dp)
                             )
                         }
@@ -976,7 +980,7 @@ fun FullScreenPlayerSheet(
                     ) {
                         Icon(
                             imageVector = Icons.Filled.SkipNext,
-                            contentDescription = null,
+                            contentDescription = stringResource(R.string.player_skip_next),
                             modifier = Modifier.size(32.dp),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
@@ -1178,9 +1182,11 @@ private fun SyncedLyricsSheetContent(
         .padding(horizontal = 20.dp, vertical = 12.dp)
 ) {
     val listState = rememberLazyListState()
-    val activeLineIndex = remember(lyrics, currentPositionMs) {
-        if (!lyrics.isSynced) 0
-        else lyrics.lines.indexOfLast { it.timeMs <= currentPositionMs + 250L }.coerceAtLeast(0)
+    val activeLineIndex by remember(lyrics) {
+        derivedStateOf {
+            if (!lyrics.isSynced) 0
+            else lyrics.lines.indexOfLast { it.timeMs <= currentPositionMs + 250L }.coerceAtLeast(0)
+        }
     }
 
     LaunchedEffect(activeLineIndex) {

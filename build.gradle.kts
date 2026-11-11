@@ -7,6 +7,10 @@ plugins {
     alias(libs.plugins.hilt.android) apply false
 }
 
-allprojects {
-    layout.buildDirectory.set(file("C:/AndroidBuilds/GMusic/${project.name}"))
+// Supporta la custom build directory ad alta velocità se presente sull'host, con fallback trasparente per CI/CD
+if (file("C:/AndroidBuilds").exists()) {
+    allprojects {
+        layout.buildDirectory.set(file("C:/AndroidBuilds/GMusic/${project.name}"))
+    }
 }
+

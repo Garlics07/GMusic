@@ -263,7 +263,7 @@ fun LibraryScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 180.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         // Barra azioni in alto a destra (sync YT e cronologia) - Senza titolo "Libreria"
@@ -409,7 +409,7 @@ fun LibraryPlaylistsScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 180.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
@@ -449,7 +449,23 @@ fun LibraryPlaylistsScreen(
             )
         }
 
-        items(filteredPlaylists, key = { it.id }) { pl ->
+        if (filteredPlaylists.isEmpty()) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 48.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.library_empty_playlists),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        } else {
+            items(filteredPlaylists, key = { it.id }) { pl ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -483,6 +499,7 @@ fun LibraryPlaylistsScreen(
         }
     }
 }
+}
 
 @Composable
 fun LibraryArtistsScreen(
@@ -500,7 +517,7 @@ fun LibraryArtistsScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 180.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
@@ -591,7 +608,7 @@ fun LibraryAlbumsScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 180.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
@@ -696,7 +713,7 @@ fun LikedSongsScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 180.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
@@ -834,7 +851,7 @@ fun DownloadedSongsScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 180.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
@@ -998,6 +1015,7 @@ fun PlaylistDetailScreen(
     val dbTracks = selectedPlaylistPair.second
     val localTracks = remember(dbTracks) { mutableStateListOf<Track>().also { it.addAll(dbTracks) } }
     var showRenameDialog by remember { mutableStateOf(false) }
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     var renameText by remember(summary?.title) { mutableStateOf(summary?.title ?: "") }
     var trackForPlaylistDialog by remember { mutableStateOf<Track?>(null) }
     var searchQuery by remember { mutableStateOf("") }
@@ -1051,9 +1069,36 @@ fun PlaylistDetailScreen(
         )
     }
 
+    if (showDeleteConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmDialog = false },
+            title = { Text(stringResource(R.string.library_delete_playlist)) },
+            text = { Text(stringResource(R.string.library_delete_playlist_confirm_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteConfirmDialog = false
+                        viewModel.deletePlaylist(playlistId)
+                        onBack()
+                    }
+                ) {
+                    Text(
+                        stringResource(R.string.action_delete),
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmDialog = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
+    }
+
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 180.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
@@ -1079,8 +1124,7 @@ fun PlaylistDetailScreen(
                     }
                     IconButton(
                         onClick = {
-                            viewModel.deletePlaylist(playlistId)
-                            onBack()
+                            showDeleteConfirmDialog = true
                         }
                     ) {
                         Icon(
@@ -1234,7 +1278,7 @@ fun HistoryScreen(
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 120.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 180.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {

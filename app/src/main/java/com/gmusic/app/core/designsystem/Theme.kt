@@ -1,57 +1,109 @@
 package com.gmusic.app.core.designsystem
 
+import android.os.Build
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 
 /**
- * Schema colori Dark fisso 100% Material Design 3 con verde #1B6B3A primario.
- * Obbligato per tutte le pagine dell'applicazione (escluso il player a schermo intero che adotta
- * dinamicamente la palette dell'artwork del brano in riproduzione).
+ * ColorScheme Material 3 Light costruita sui token di color_palette.md
  */
-val GMusicDarkColorScheme: ColorScheme = darkColorScheme(
-    primary = BrandGreen,
-    onPrimary = Color.White,
-    primaryContainer = BrandGreen,
-    onPrimaryContainer = Color.White,
-    secondary = BrandGreenBright,
-    onSecondary = Color.White,
-    secondaryContainer = BrandGreen,
-    onSecondaryContainer = Color.White,
-    tertiary = Color(0xFF7ED49C),
-    onTertiary = Color(0xFF003919),
-    tertiaryContainer = Color(0xFF1B4E2E),
-    onTertiaryContainer = Color(0xFFA5F5C3),
-    background = Color(0xFF121412),
-    onBackground = Color(0xFFE1E3DF),
-    surface = Color(0xFF121412),
-    onSurface = Color(0xFFE1E3DF),
-    surfaceVariant = Color(0xFF282E29),
-    onSurfaceVariant = Color(0xFFC0C9C1),
-    surfaceContainerLowest = Color(0xFF0C0E0C),
-    surfaceContainerLow = Color(0xFF161916),
-    surfaceContainer = Color(0xFF1A1D1A),
-    surfaceContainerHigh = Color(0xFF242824),
-    surfaceContainerHighest = Color(0xFF2F332F),
-    outline = Color(0xFF8A9389),
-    outlineVariant = Color(0xFF3F4941),
-    error = Color(0xFFF2B8B5),
-    onError = Color(0xFF601410),
-    errorContainer = Color(0xFF8C1D18),
-    onErrorContainer = Color(0xFFF9DEDC)
+val GMusicLightColorScheme: ColorScheme = lightColorScheme(
+    primary = md_theme_light_primary,
+    onPrimary = md_theme_light_onPrimary,
+    primaryContainer = md_theme_light_primaryContainer,
+    onPrimaryContainer = md_theme_light_onPrimaryContainer,
+    secondary = md_theme_light_secondary,
+    onSecondary = md_theme_light_onSecondary,
+    secondaryContainer = md_theme_light_secondaryContainer,
+    onSecondaryContainer = md_theme_light_onSecondaryContainer,
+    tertiary = md_theme_light_tertiary,
+    onTertiary = md_theme_light_onTertiary,
+    tertiaryContainer = md_theme_light_tertiaryContainer,
+    onTertiaryContainer = md_theme_light_onTertiaryContainer,
+    background = md_theme_light_background,
+    onBackground = md_theme_light_onBackground,
+    surface = md_theme_light_surface,
+    onSurface = md_theme_light_onSurface,
+    surfaceVariant = md_theme_light_surfaceVariant,
+    onSurfaceVariant = md_theme_light_onSurfaceVariant,
+    surfaceContainerLowest = md_theme_light_surfaceContainerLowest,
+    surfaceContainerLow = md_theme_light_surfaceContainerLow,
+    surfaceContainer = md_theme_light_surfaceContainer,
+    surfaceContainerHigh = md_theme_light_surfaceContainerHigh,
+    surfaceContainerHighest = md_theme_light_surfaceContainerHighest,
+    outline = md_theme_light_outline,
+    outlineVariant = md_theme_light_outlineVariant,
+    error = md_theme_light_error,
+    onError = md_theme_light_onError,
+    errorContainer = md_theme_light_errorContainer,
+    onErrorContainer = md_theme_light_onErrorContainer
 )
 
+/**
+ * ColorScheme Material 3 Dark costruita sui token di color_palette.md
+ */
+val GMusicDarkColorScheme: ColorScheme = darkColorScheme(
+    primary = md_theme_dark_primary,
+    onPrimary = md_theme_dark_onPrimary,
+    primaryContainer = md_theme_dark_primaryContainer,
+    onPrimaryContainer = md_theme_dark_onPrimaryContainer,
+    secondary = md_theme_dark_secondary,
+    onSecondary = md_theme_dark_onSecondary,
+    secondaryContainer = md_theme_dark_secondaryContainer,
+    onSecondaryContainer = md_theme_dark_onSecondaryContainer,
+    tertiary = md_theme_dark_tertiary,
+    onTertiary = md_theme_dark_onTertiary,
+    tertiaryContainer = md_theme_dark_tertiaryContainer,
+    onTertiaryContainer = md_theme_dark_onTertiaryContainer,
+    background = md_theme_dark_background,
+    onBackground = md_theme_dark_onBackground,
+    surface = md_theme_dark_surface,
+    onSurface = md_theme_dark_onSurface,
+    surfaceVariant = md_theme_dark_surfaceVariant,
+    onSurfaceVariant = md_theme_dark_onSurfaceVariant,
+    surfaceContainerLowest = md_theme_dark_surfaceContainerLowest,
+    surfaceContainerLow = md_theme_dark_surfaceContainerLow,
+    surfaceContainer = md_theme_dark_surfaceContainer,
+    surfaceContainerHigh = md_theme_dark_surfaceContainerHigh,
+    surfaceContainerHighest = md_theme_dark_surfaceContainerHighest,
+    outline = md_theme_dark_outline,
+    outlineVariant = md_theme_dark_outlineVariant,
+    error = md_theme_dark_error,
+    onError = md_theme_dark_onError,
+    errorContainer = md_theme_dark_errorContainer,
+    onErrorContainer = md_theme_dark_onErrorContainer
+)
+
+/**
+ * Entry-point del tema Compose per l'intera app GMusic.
+ * Supporta:
+ * 1. Switch automatico o manuale tra Dark e Light mode.
+ * 2. Dynamic Color (Material You) su Android 12+ (API 31+).
+ */
 @Composable
 fun GMusicTheme(
-    darkTheme: Boolean = true,
+    darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = false,
-    seedPrimaryColor: Color? = null,
     content: @Composable () -> Unit
 ) {
+    val context = LocalContext.current
+    val colorScheme = when {
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        }
+        darkTheme -> GMusicDarkColorScheme
+        else -> GMusicLightColorScheme
+    }
+
     MaterialTheme(
-        colorScheme = GMusicDarkColorScheme,
+        colorScheme = colorScheme,
         typography = GMusicTypography,
         shapes = GMusicShapes,
         content = content

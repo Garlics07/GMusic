@@ -165,16 +165,24 @@ class HomeViewModel @Inject constructor(
         if (_uiState.value.isRefreshing) return
         _uiState.update { it.copy(isRefreshing = true) }
         viewModelScope.launch {
-            musicRepository.syncRemoteLibraryIfLoggedIn()
-            val freshSections = musicRepository.buildHomeFeedSections(page = 0)
-            _uiState.update {
-                it.copy(
-                    sections = freshSections,
-                    isRefreshing = false,
-                    isLoading = false,
-                    currentPage = 1,
-                    canLoadMore = true
-                )
+            try {
+                musicRepository.syncRemoteLibraryIfLoggedIn()
+                val freshSections = musicRepository.buildHomeFeedSections(page = 0)
+                _uiState.update {
+                    it.copy(
+                        sections = freshSections,
+                        currentPage = 1,
+                        canLoadMore = freshSections.isNotEmpty()
+                    )
+                }
+            } catch (_: Exception) {
+            } finally {
+                _uiState.update {
+                    it.copy(
+                        isRefreshing = false,
+                        isLoading = false
+                    )
+                }
             }
         }
     }
@@ -185,19 +193,23 @@ class HomeViewModel @Inject constructor(
         val nextPage = current.currentPage
         _uiState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
-            val newSections = musicRepository.buildHomeFeedSections(page = nextPage)
-            _uiState.update { old ->
-                val merged = if (nextPage == 0) {
-                    newSections
-                } else {
-                    (old.sections + newSections).distinctBy { it.id.ifEmpty { it.title } }
+            try {
+                val newSections = musicRepository.buildHomeFeedSections(page = nextPage)
+                _uiState.update { old ->
+                    val merged = if (nextPage == 0) {
+                        newSections
+                    } else {
+                        (old.sections + newSections).distinctBy { it.id.ifEmpty { it.title } }
+                    }
+                    old.copy(
+                        sections = merged,
+                        currentPage = nextPage + 1,
+                        canLoadMore = newSections.isNotEmpty()
+                    )
                 }
-                old.copy(
-                    sections = merged,
-                    isLoading = false,
-                    currentPage = nextPage + 1,
-                    canLoadMore = newSections.isNotEmpty()
-                )
+            } catch (_: Exception) {
+            } finally {
+                _uiState.update { it.copy(isLoading = false) }
             }
         }
     }

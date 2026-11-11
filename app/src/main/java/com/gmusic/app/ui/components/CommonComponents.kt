@@ -210,7 +210,7 @@ fun TrackRowWithMenu(
             IconButton(onClick = { menuExpanded = true }) {
                 Icon(
                     imageVector = Icons.Filled.MoreVert,
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.action_more_options),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -254,7 +254,7 @@ fun TrackRowWithMenu(
                             leadingIcon = {
                                 Icon(
                                     imageVector = Icons.Filled.Delete,
-                                    contentDescription = null,
+                                    contentDescription = stringResource(R.string.action_more_options),
                                     tint = MaterialTheme.colorScheme.error
                                 )
                             },
@@ -309,7 +309,7 @@ fun TrackRowWithMenu(
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Filled.Delete,
-                                contentDescription = null,
+                                contentDescription = stringResource(R.string.action_more_options),
                                 tint = MaterialTheme.colorScheme.error
                             )
                         },
@@ -418,7 +418,7 @@ fun TrackOptionsBottomSheet(
                 leadingContent = {
                     Icon(
                         imageVector = if (track.isLiked) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.action_more_options),
                         tint = if (track.isLiked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
@@ -454,7 +454,7 @@ fun TrackOptionsBottomSheet(
                     leadingContent = {
                         Icon(
                             imageVector = Icons.Filled.Delete,
-                            contentDescription = null,
+                            contentDescription = stringResource(R.string.action_more_options),
                             tint = MaterialTheme.colorScheme.error
                         )
                     },

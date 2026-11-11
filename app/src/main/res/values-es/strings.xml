@@ -189,7 +189,9 @@
     <string name="menu_download_track">Descargar canción</string>
     <string name="menu_remove_download">Eliminar descarga</string>
     <string name="downloading_in_progress">Descargando…</string>
-    <string name="settings_changelog_v295_title">v2.9.5 (Actual) - Optimización de Ajustes &amp; Tema Automático</string>
+    <string name="settings_changelog_v301_title">v3.0.1 (Actual) - Tema Material 3 &amp; Mejoras UI/UX</string>
+    <string name="settings_changelog_v301_desc">• Paleta Material 3 con verde de marca unificado en temas claro y oscuro\n• Corrección del problema visual donde el logo aparecía debajo del reproductor\n• Optimizaciones de rendimiento en WavySlider y letras sincronizadas\n• Márgenes corregidos para el mini-reproductor y diálogo de confirmación para eliminar listas</string>
+    <string name="settings_changelog_v295_title">v2.9.5 - Optimización de Ajustes &amp; Tema Automático</string>
     <string name="settings_changelog_v295_desc">• Eliminación de opciones manuales de tema y colores: la aplicación aplica automáticamente colores dinámicos de sistema Material You (Monet) y paleta de carátula\n• Reorganización de ajustes de audio con control de crossfade unificado\n• Optimizaciones de estabilidad y rendimiento</string>
     <string name="settings_changelog_v289_title">v2.8.9 - Enlaces de YouTube Music &amp; Compartir</string>
     <string name="settings_changelog_v289_desc">• Apertura directa de enlaces compartidos de YouTube Music y youtu.be en GMusic\n• Reproducción instantánea con reproductor a pantalla completa para canciones\n• Compatibilidad con listas, álbumes y canales de artistas compartidos\n• Actualización en el dispositivo fluida y garantizada</string>

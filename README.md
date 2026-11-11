@@ -87,7 +87,7 @@ GMusic adotta una rigorosa **Clean Architecture** (Presentation, Domain, Data) o
 
 ### 📦 Download ed Installazione (Release Ufficiali)
 
-I file di release APK pronti all'installazione su smartphone e tablet Android sono disponibili direttamente nella sezione **[Releases](../../releases)** del repository (oltre che nella cartella principale del progetto, es. `GMusic 2.9.5.apk`).
+I file di release APK pronti all'installazione su smartphone e tablet Android sono disponibili direttamente nella sezione **[Releases](../../releases)** del repository (oltre che nella cartella principale del progetto, es. `GMusic 3.0.1.apk`).
 
 > [!NOTE]
 > **Tutte le build di rilascio vengono compilate, ottimizzate (con R8/ProGuard) e firmate manualmente dallo sviluppatore** (non tramite GitHub Actions o server CI esterni). Questo assicura che ogni aggiornamento sia testato, mantenga la stessa chiave crittografica e permetta l'**aggiornamento diretto (*in-place update*)** senza perdere playlist, preferiti o brani scaricati.
@@ -116,7 +116,7 @@ L'APK compilato viene generato in:
 
 ##### Installazione rapida via ADB:
 ```bash
-adb install -r "GMusic 2.9.5.apk"
+adb install -r "GMusic 3.0.1.apk"
 ```
 
 ---
@@ -191,7 +191,7 @@ GMusic follows **Clean Architecture** patterns with unidirectional data flow (UD
 
 ### 📦 Download & Installation (Official Releases)
 
-Ready-to-install release APKs for Android phones and tablets are available under the **[Releases](../../releases)** section of this repository (as well as the project root directory, e.g., `GMusic 2.9.5.apk`).
+Ready-to-install release APKs for Android phones and tablets are available under the **[Releases](../../releases)** section of this repository (as well as the project root directory, e.g., `GMusic 3.0.1.apk`).
 
 > [!NOTE]
 > **All release builds are compiled, optimized (via R8/ProGuard), and cryptographically signed manually by the developer** (not generated through GitHub Actions or external CI bots). This ensures verified performance, consistent signing keys, and **guaranteed in-place updates** without losing your downloaded songs, playlists, or favorite tracks.
@@ -220,7 +220,7 @@ The compiled APK will be generated at:
 
 ##### Quick Install via ADB
 ```bash
-adb install -r "GMusic 2.9.5.apk"
+adb install -r "GMusic 3.0.1.apk"
 ```
 
 ---

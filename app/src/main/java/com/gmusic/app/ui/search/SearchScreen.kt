@@ -214,7 +214,7 @@ fun SearchScreen(
             state.query.isBlank() -> {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 120.dp),
+                    contentPadding = PaddingValues(bottom = 180.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     if (state.exploreMoods.isNotEmpty()) {
@@ -288,7 +288,7 @@ fun SearchScreen(
             else -> {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 24.dp),
+                    contentPadding = PaddingValues(bottom = 180.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // Suggerimenti live durante la digitazione
@@ -491,6 +491,29 @@ fun SearchScreen(
                                         overflow = TextOverflow.Ellipsis
                                     )
                                 }
+                            }
+                        }
+                    }
+
+                    if (!state.isLoading &&
+                        state.songResults.isEmpty() &&
+                        state.artistResults.isEmpty() &&
+                        state.albumResults.isEmpty() &&
+                        state.playlistResults.isEmpty() &&
+                        state.suggestions.isEmpty()
+                    ) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 48.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.search_no_results),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                         }
                     }
