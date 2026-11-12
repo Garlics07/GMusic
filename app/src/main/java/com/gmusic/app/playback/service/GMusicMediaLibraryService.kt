@@ -1138,11 +1138,76 @@ class GMusicMediaLibraryService : MediaLibraryService() {
             browser: MediaSession.ControllerInfo,
             mediaId: String
         ): ListenableFuture<LibraryResult<MediaItem>> = serviceScope.future {
+            when (mediaId) {
+                NODE_ROOT -> {
+                    val rootItem = MediaItem.Builder()
+                        .setMediaId(NODE_ROOT)
+                        .setMediaMetadata(
+                            MediaMetadata.Builder()
+                                .setTitle(getString(R.string.app_name))
+                                .setArtworkUri(resourceUri(R.drawable.ic_aa_logo))
+                                .setIsBrowsable(true)
+                                .setIsPlayable(false)
+                                .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
+                                .build()
+                        )
+                        .build()
+                    return@future LibraryResult.ofItem(rootItem, null)
+                }
+                NODE_TAB_HOME -> return@future LibraryResult.ofItem(
+                    rootTabFolder(NODE_TAB_HOME, getString(R.string.auto_root_home), R.drawable.ic_aa_home, CONTENT_STYLE_GRID_ITEM_HINT_VALUE, CONTENT_STYLE_LIST_ITEM_HINT_VALUE),
+                    null
+                )
+                NODE_TAB_SEARCH -> return@future LibraryResult.ofItem(
+                    rootTabFolder(NODE_TAB_SEARCH, getString(R.string.auto_root_search), R.drawable.ic_aa_search, CONTENT_STYLE_GRID_ITEM_HINT_VALUE, CONTENT_STYLE_LIST_ITEM_HINT_VALUE),
+                    null
+                )
+                NODE_TAB_LIBRARY -> return@future LibraryResult.ofItem(
+                    rootTabFolder(NODE_TAB_LIBRARY, getString(R.string.auto_root_library), R.drawable.ic_aa_library, CONTENT_STYLE_LIST_ITEM_HINT_VALUE, CONTENT_STYLE_LIST_ITEM_HINT_VALUE),
+                    null
+                )
+                NODE_LIB_LIKED -> return@future LibraryResult.ofItem(
+                    browsableContainerItem(NODE_LIB_LIKED, getString(R.string.auto_root_liked), null, MediaMetadata.MEDIA_TYPE_PLAYLIST, iconRes = R.drawable.ic_aa_heart),
+                    null
+                )
+                NODE_LIB_PLAYLISTS -> return@future LibraryResult.ofItem(
+                    browsableContainerItem(NODE_LIB_PLAYLISTS, getString(R.string.auto_root_playlists), null, MediaMetadata.MEDIA_TYPE_FOLDER_PLAYLISTS, iconRes = R.drawable.ic_aa_library),
+                    null
+                )
+                NODE_LIB_ALBUMS -> return@future LibraryResult.ofItem(
+                    browsableContainerItem(NODE_LIB_ALBUMS, getString(R.string.auto_lib_albums), null, MediaMetadata.MEDIA_TYPE_FOLDER_ALBUMS, iconRes = R.drawable.ic_aa_album),
+                    null
+                )
+                NODE_LIB_ARTISTS -> return@future LibraryResult.ofItem(
+                    browsableContainerItem(NODE_LIB_ARTISTS, getString(R.string.auto_lib_artists), null, MediaMetadata.MEDIA_TYPE_FOLDER_ARTISTS, iconRes = R.drawable.ic_aa_artist),
+                    null
+                )
+                NODE_LIB_DOWNLOADS -> return@future LibraryResult.ofItem(
+                    browsableContainerItem(NODE_LIB_DOWNLOADS, getString(R.string.auto_lib_downloads), null, MediaMetadata.MEDIA_TYPE_FOLDER_MIXED, iconRes = R.drawable.ic_aa_download),
+                    null
+                )
+            }
             if (mediaId.startsWith(PREFIX_ARTIST)) {
                 val artId = mediaId.removePrefix(PREFIX_ARTIST)
                 val name = artistNameHints[artId] ?: artId
                 val item = playableArtistItem(mediaId, name)
                 return@future LibraryResult.ofItem(item, null)
+            }
+            if (mediaId.startsWith(PREFIX_PLAYLIST) ||
+                mediaId.startsWith(PREFIX_REMOTE_PLAYLIST) ||
+                mediaId.startsWith(PREFIX_ALBUM) ||
+                mediaId.startsWith(PREFIX_MIX) ||
+                mediaId.startsWith(PREFIX_MOOD)
+            ) {
+                val titleHint = albumTitleHints[mediaId.substringAfter(":")] ?: "Raccolta"
+                val container = browsableContainerItem(
+                    id = mediaId,
+                    title = titleHint,
+                    subtitle = null,
+                    mediaType = MediaMetadata.MEDIA_TYPE_PLAYLIST,
+                    iconRes = R.drawable.ic_aa_album
+                )
+                return@future LibraryResult.ofItem(container, null)
             }
             val dummy = MediaItem.Builder().setMediaId(mediaId).build()
             val resolved = resolveFullMediaItem(dummy)

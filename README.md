@@ -29,6 +29,10 @@
   * **Barra di navigazione ancorata al lato fisico inferiore del device**: in orizzontale la barra resta ancorata al bordo del connettore/altoparlanti (destra o sinistra in base a come viene ruotato il dispositivo), trasformandosi in un dock verticale ergonomico per il pollice, garantendo che fotocamere e notch non siano mai d'intralcio.
   * **Player a 2 colonne in Landscape**: colonna sinistra con copertina, slider ondoso e controlli di riproduzione; colonna destra con selettore rapido a schede (*tab switcher*) per alternare tra **Testi sincronizzati (Karaoke LRC)** e **Coda di riproduzione**.
   * **Home Screen adattiva**: griglia di accesso rapido che passa automaticamente da **2x3** in verticale a **3x2** in orizzontale, con caroselli e card distribuiti armoniosamente.
+* **🛡️ Privacy Avanzata & Zero Inquinamento Cronologia YouTube (v3.0.4)**
+  * **Ricerche 100% anonime**: ricerche, suggerimenti di digitazione ed esplorazione catalogo avvengono senza cookie dell'account Google, lasciando intatta e pulita la cronologia ricerche su YouTube e Google.
+  * **Controllo sincronizzazione ascolti**: nuovo selettore dedicato nelle Impostazioni per scegliere se registrare i brani ascoltati nella cronologia visualizzazioni di YouTube (disattivato per impostazione predefinita per la massima privacy).
+  * **Protezione ID & Android Auto**: validazione rigorosa dei codici video (11 caratteri) e gestione diretta dei nodi di sistema che previene chiamate errate.
 * **🔄 Sincronizzazione Reale a Doppia Via (YouTube Music $\leftrightarrow$ GMusic)**
   * **Registrazione ufficiale degli ascolti**: Gli ascolti effettuati nell'app vengono registrati all'istante nella cronologia ufficiale del tuo account Google tramite protocollo InnerTube ufficiale (Playback & Watch-Time tracking HTTP 204).
   * **Cronologia account bidirezionale**: Visualizza e aggiorna la cronologia in tempo reale con pull-to-refresh (`FEmusic_history`).
@@ -133,6 +137,10 @@ adb install -r "GMusic 3.0.3.apk"
   * **Navigation bar docked to physical bottom edge**: in landscape, the navigation bar anchors along the device's physical bottom (where charging port/speakers are located, right or left depending on rotation), morphing into an ergonomic vertical pill dock that keeps front cameras and notches unobstructed.
   * **Two-pane Full Player in Landscape**: left pane hosts artwork, track metadata, wavy slider, and playback controls; right pane includes an interactive tab switcher to toggle between **Synchronized Lyrics (Karaoke LRC)** and the **Playback Queue**.
   * **Adaptive Home Screen**: top quick access grid dynamically shifts from **2x3** in portrait to **3x2** in landscape, preserving elegant card proportions.
+* **🛡️ Advanced Privacy & Zero YouTube History Pollution (v3.0.4)**
+  * **100% Anonymous Searches**: song, artist, album, and suggestion queries run unauthenticated without account cookies, preserving clean Google & YouTube search histories.
+  * **Watch History Sync Toggle**: dedicated privacy setting allowing users to decide whether played tracks appear in their YouTube watch history (disabled by default for maximum privacy).
+  * **Strict ID Validation & Android Auto Nodes**: 11-character YouTube video ID regex validation preventing accidental internal navigation query lookups.
 * **🔄 Genuine Two-Way Sync (YouTube Music $\leftrightarrow$ GMusic)**
   * **Official Playback Tracking**: Listened songs in GMusic are immediately reported to your Google account's official history using standard InnerTube endpoints (HTTP 204 Playback & Watch-Time beacons).
   * **Live History Sync**: Browse and refresh your YouTube Music listening history seamlessly (`FEmusic_history`).

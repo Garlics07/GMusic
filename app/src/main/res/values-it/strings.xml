@@ -174,6 +174,10 @@
 
     <!-- Stringhe Impostazioni Aggiuntive -->
     <string name="settings_google_account">Account Google</string>
+    <string name="settings_privacy_title">Privacy &amp; Account YouTube</string>
+    <string name="settings_sync_playback_yt">Sincronizza ascolti con cronologia YouTube</string>
+    <string name="settings_sync_playback_yt_desc">Se disattivato (consigliato), i brani ascoltati in GMusic non appariranno nella cronologia di visualizzazione del tuo account Google/YouTube.</string>
+    <string name="settings_privacy_search_info">Tutte le ricerche di brani, suggerimenti e la navigazione del catalogo in GMusic sono anonime al 100% e non vengono mai salvate nella cronologia del tuo account Google/YouTube.</string>
     <string name="settings_theme_dynamic_title">Material You (Colori dinamici)</string>
     <string name="settings_theme_dynamic_desc">L\'app adotta fedelmente i colori dinamici estratti dallo sfondo del tuo dispositivo Android (Monet), garantendo uniformità e coerenza visiva su ogni schermo.</string>
     <string name="settings_quality_high_desc">Opus itag 251 (160 kbps) preferito con fallback AAC itag 140. Nessun video decodificato (Audio Only rigoroso).</string>
@@ -197,7 +201,9 @@
     <string name="menu_download_track">Scarica brano</string>
     <string name="menu_remove_download">Elimina download</string>
     <string name="downloading_in_progress">Download in corso…</string>
-    <string name="settings_changelog_v303_title">v3.0.3 (Attuale) - Reattività Navigazione &amp; Fix UI Home</string>
+    <string name="settings_changelog_v304_title">v3.0.4 (Attuale) - Privacy Totale &amp; Zero Inquinamento Cronologia YouTube</string>
+    <string name="settings_changelog_v304_desc">• Ricerche anonime: ricerche brani, artisti, album e suggerimenti eseguiti senza cookie account per non inquinare la cronologia ricerche di Google/YouTube\n• Risolto il salvataggio dei nodi interni nella cronologia ricerche (tab_home, root, tab_search, tab_library, lib_liked)\n• Nuovo toggle privacy nelle Impostazioni: sincronizzazione ascolti con la cronologia YouTube disattivata per impostazione predefinita\n• Protezione ID brani: validazione rigorosa dei codici video YouTube (11 caratteri) che impedisce ricerche accidentali\n• Risoluzione ottimizzata dei nodi Android Auto</string>
+    <string name="settings_changelog_v303_title">v3.0.3 - Reattività Navigazione &amp; Fix UI Home</string>
     <string name="settings_changelog_v303_desc">• Sfondo card Canzoni Preferite in Home a tinta unita verde pieno\n• Transizioni di navigazione scattanti a 150ms in tutta l\'app\n• Blocco dei tocchi accidentali in uscita dalle categorie di Libreria (nessuna riproduzione o apertura involontaria di brani/album)\n• Navigazione Libreria fluida e immediata con pulizia automatica dello stack\n• Ottimizzazione sincronizzazione libreria con riduzione del carico di rete e database</string>
     <string name="settings_changelog_v302_title">v3.0.2 - Raffinamento UI &amp; Correzioni Interfaccia</string>
     <string name="settings_changelog_v302_desc">• Rimozione del gradiente in testata Home per un design flat minimale\n• Sfondi categorie libreria a tinta unita verde brand\n• Risolto il bug di navigazione rapida tra le sezioni della libreria\n• Eliminati i testi scuri e bottoni ad alto contrasto nelle impostazioni\n• Pulsanti secondari con bordo e testo bianco in modalità scura per Album, Artisti e Playlist</string>

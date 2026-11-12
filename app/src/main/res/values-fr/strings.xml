@@ -189,7 +189,13 @@
     <string name="menu_download_track">Télécharger le titre</string>
     <string name="menu_remove_download">Supprimer le téléchargement</string>
     <string name="downloading_in_progress">Téléchargement en cours…</string>
-    <string name="settings_changelog_v303_title">v3.0.3 (Actuelle) - Réactivité de Navigation &amp; UI Accueil</string>
+    <string name="settings_privacy_title">Confidentialité &amp; Compte YouTube</string>
+    <string name="settings_sync_playback_yt">Synchroniser les écoutes avec l\'historique YouTube</string>
+    <string name="settings_sync_playback_yt_desc">Si désactivé (recommandé), les titres écoutés dans GMusic n\'apparaîtront pas dans l\'historique de lecture de votre compte Google/YouTube.</string>
+    <string name="settings_privacy_search_info">Toutes les recherches, suggestions et explorations du catalogue dans GMusic sont 100% anonymes et ne sont jamais enregistrées dans l\'historique de recherche Google/YouTube.</string>
+    <string name="settings_changelog_v304_title">v3.0.4 (Actuelle) - Confidentialité Totale &amp; Zéro Pollution de l\'Historique YouTube</string>
+    <string name="settings_changelog_v304_desc">• Recherches anonymes : recherches de titres, artistes, albums et suggestions exécutées sans cookies de compte pour préserver l\'historique Google/YouTube\n• Correction de l\'enregistrement des nœuds internes dans l\'historique (tab_home, root, tab_search, tab_library, lib_liked)\n• Nouveau commutateur de confidentialité dans les Paramètres : synchronisation des écoutes désactivée par défaut\n• Protection des ID de pistes : validation stricte à 11 caractères pour les ID YouTube\n• Résolution optimisée des nœuds Android Auto</string>
+    <string name="settings_changelog_v303_title">v3.0.3 - Réactivité de Navigation &amp; UI Accueil</string>
     <string name="settings_changelog_v303_desc">• Fond de la carte Titres Likés sur l\'Accueil en vert marque uni\n• Transitions de navigation rapides de 150ms dans toute l\'application\n• Protection contre les clics accidentels en quittant les catégories de la bibliothèque\n• Navigation fluide et immédiate avec nettoyage automatique de l\'historique\n• Optimisation de la synchronisation réduisant les requêtes réseau et base de données</string>
     <string name="settings_changelog_v302_title">v3.0.2 - Raffinement UI &amp; Améliorations de l\'Interface</string>
     <string name="settings_changelog_v302_desc">• Suppression du dégradé en haut de l\'Accueil pour un design épuré\n• Fond des catégories de la bibliothèque en vert marque uni\n• Correction du bug de navigation rapide entre les catégories de la bibliothèque\n• Suppression des textes sombres et boutons à haut contraste dans les paramètres\n• Boutons secondaires avec bordure et texte blancs en mode sombre pour Albums, Artistes et Playlists</string>

@@ -189,7 +189,13 @@
     <string name="menu_download_track">Descargar canción</string>
     <string name="menu_remove_download">Eliminar descarga</string>
     <string name="downloading_in_progress">Descargando…</string>
-    <string name="settings_changelog_v303_title">v3.0.3 (Actual) - Reactividad de Navegación &amp; UI Inicio</string>
+    <string name="settings_privacy_title">Privacidad &amp; Cuenta de YouTube</string>
+    <string name="settings_sync_playback_yt">Sincronizar reproducciones con historial de YouTube</string>
+    <string name="settings_sync_playback_yt_desc">Si está desactivado (recomendado), las canciones reproducidas en GMusic no aparecerán en el historial de reproducciones de tu cuenta Google/YouTube.</string>
+    <string name="settings_privacy_search_info">Todas las búsquedas, sugerencias y exploración del catálogo en GMusic son 100% anónimas y nunca se guardan en el historial de búsqueda de Google/YouTube.</string>
+    <string name="settings_changelog_v304_title">v3.0.4 (Actual) - Privacidad Total &amp; Cero Contaminación del Historial de YouTube</string>
+    <string name="settings_changelog_v304_desc">• Búsquedas anónimas: búsquedas de canciones, artistas, álbumes y sugerencias ejecutadas sin cookies de cuenta para mantener limpio el historial de Google/YouTube\n• Corregido el registro de nodos internos en el historial (tab_home, root, tab_search, tab_library, lib_liked)\n• Nuevo interruptor de privacidad en Ajustes: sincronización de reproducciones con el historial de YouTube desactivada por defecto\n• Protección de ID de canciones: validación estricta de 11 caracteres para IDs de YouTube\n• Resolución optimizada de nodos en Android Auto</string>
+    <string name="settings_changelog_v303_title">v3.0.3 - Reactividad de Navegación &amp; UI Inicio</string>
     <string name="settings_changelog_v303_desc">• Fondo de Canciones Favoritas en Inicio en verde marca sólido\n• Transiciones de navegación rápidas de 150ms en toda la app\n• Protección contra toques accidentales al salir de categorías de biblioteca\n• Navegación de biblioteca fluida e inmediata con limpieza de historial\n• Optimización de sincronización reduciendo solicitudes de red y base de datos</string>
     <string name="settings_changelog_v302_title">v3.0.2 - Refinamiento UI &amp; Correcciones de Interfaz</string>
     <string name="settings_changelog_v302_desc">• Eliminación del degradado en Inicio para un diseño plano y limpio\n• Fondos de categorías de biblioteca en verde marca sólido\n• Corrección del error de navegación rápida entre categorías de biblioteca\n• Textos oscuros eliminados y botones de alto contraste en ajustes\n• Botones secundarios con borde y texto blanco en tema oscuro para Álbumes, Artistas y Listas</string>

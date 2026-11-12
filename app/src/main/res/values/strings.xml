@@ -174,6 +174,10 @@
 
     <!-- Settings Additional Strings -->
     <string name="settings_google_account">Google Account</string>
+    <string name="settings_privacy_title">Privacy &amp; YouTube Account</string>
+    <string name="settings_sync_playback_yt">Sync playback to YouTube history</string>
+    <string name="settings_sync_playback_yt_desc">When disabled (recommended), tracks played in GMusic will not appear in your Google/YouTube watch history.</string>
+    <string name="settings_privacy_search_info">All searches, suggestions and catalog browsing in GMusic are 100% anonymous and never saved to your Google/YouTube search history.</string>
     <string name="settings_theme_dynamic_title">Material You (Dynamic Colors)</string>
     <string name="settings_theme_dynamic_desc">The app faithfully adopts the dynamic colors extracted from your Android device wallpaper (Monet), ensuring visual consistency across all screens.</string>
     <string name="settings_quality_high_desc">Opus itag 251 (160 kbps) preferred with AAC itag 140 fallback. No video decoded (strict Audio Only).</string>
@@ -197,7 +201,9 @@
     <string name="menu_download_track">Download track</string>
     <string name="menu_remove_download">Delete download</string>
     <string name="downloading_in_progress">Downloading…</string>
-    <string name="settings_changelog_v303_title">v3.0.3 (Current) - Navigation Responsiveness &amp; Home UI Fixes</string>
+    <string name="settings_changelog_v304_title">v3.0.4 (Current) - Total Privacy &amp; Zero YouTube History Pollution</string>
+    <string name="settings_changelog_v304_desc">• Anonymous searches: searches for tracks, artists, albums, and suggestions run without account cookies to keep Google/YouTube search history clean\n• Fixed internal node logging in search history (tab_home, root, tab_search, tab_library, lib_liked)\n• New privacy toggle in Settings: YouTube watch history playback synchronization disabled by default\n• Track ID protection: strict 11-character YouTube video ID validation preventing accidental search fallbacks\n• Optimized Android Auto container resolution</string>
+    <string name="settings_changelog_v303_title">v3.0.3 - Navigation Responsiveness &amp; Home UI Fixes</string>
     <string name="settings_changelog_v303_desc">• Solid brand green background for Liked Songs card on Home\n• Snappy 150ms navigation transitions across the entire app\n• Touch guard during category exit preventing accidental song playback or album opening\n• Smooth and immediate Library navigation with automatic backstack cleanup\n• Optimized library sync reducing network requests and database overhead</string>
     <string name="settings_changelog_v302_title">v3.0.2 - UI Refinement &amp; Interface Fixes</string>
     <string name="settings_changelog_v302_desc">• Removed top header gradient on Home for a clean flat design\n• Solid brand green background for library category cards\n• Fixed rapid category switching navigation bug in Library\n• Eliminated low-contrast dark texts and improved button styling in settings\n• Secondary action buttons with white border and text in Dark mode for Albums, Artists and Playlists</string>

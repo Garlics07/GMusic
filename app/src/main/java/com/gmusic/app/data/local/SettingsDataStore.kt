@@ -56,6 +56,7 @@ data class UserSettings(
     val virtualizerPercent: Int = 0,
     val pipedInstancesCsv: String = DEFAULT_PIPED_INSTANCES.joinToString(","),
     val invidiousInstancesCsv: String = DEFAULT_INVIDIOUS_INSTANCES.joinToString(","),
+    val syncPlaybackToYouTube: Boolean = false,
     val lastQueueJson: String = "",
     val lastQueueIndex: Int = 0,
     val lastPositionMs: Long = 0L
@@ -96,6 +97,7 @@ class SettingsDataStore @Inject constructor(
         val VIRTUALIZER_PCT = intPreferencesKey("virtualizer_pct")
         val PIPED_INSTANCES = stringPreferencesKey("piped_instances_csv")
         val INVIDIOUS_INSTANCES = stringPreferencesKey("invidious_instances_csv")
+        val SYNC_PLAYBACK_TO_YT = booleanPreferencesKey("sync_playback_to_yt")
         val LAST_QUEUE_JSON = stringPreferencesKey("last_queue_json")
         val LAST_QUEUE_INDEX = intPreferencesKey("last_queue_index")
         val LAST_POSITION_MS = longPreferencesKey("last_position_ms")
@@ -122,6 +124,7 @@ class SettingsDataStore @Inject constructor(
                 ?: UserSettings.DEFAULT_PIPED_INSTANCES.joinToString(","),
             invidiousInstancesCsv = prefs[Keys.INVIDIOUS_INSTANCES]
                 ?: UserSettings.DEFAULT_INVIDIOUS_INSTANCES.joinToString(","),
+            syncPlaybackToYouTube = prefs[Keys.SYNC_PLAYBACK_TO_YT] ?: false,
             lastQueueJson = prefs[Keys.LAST_QUEUE_JSON] ?: "",
             lastQueueIndex = prefs[Keys.LAST_QUEUE_INDEX] ?: 0,
             lastPositionMs = prefs[Keys.LAST_POSITION_MS] ?: 0L
@@ -180,6 +183,10 @@ class SettingsDataStore @Inject constructor(
 
     suspend fun setInvidiousInstancesCsv(csv: String) {
         context.dataStore.edit { it[Keys.INVIDIOUS_INSTANCES] = csv }
+    }
+
+    suspend fun setSyncPlaybackToYouTube(enabled: Boolean) {
+        context.dataStore.edit { it[Keys.SYNC_PLAYBACK_TO_YT] = enabled }
     }
 
     suspend fun savePlaybackState(queueJson: String, queueIndex: Int, positionMs: Long) {

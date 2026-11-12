@@ -138,6 +138,10 @@ class SettingsViewModel @Inject constructor(
         authCredentialStore.saveCredentials(cookie, visitorData)
     }
 
+    fun setSyncPlaybackToYouTube(enabled: Boolean) {
+        viewModelScope.launch { settingsDataStore.setSyncPlaybackToYouTube(enabled) }
+    }
+
     fun logout() {
         authCredentialStore.clearCredentials()
     }

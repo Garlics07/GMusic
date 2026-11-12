@@ -15,8 +15,8 @@ android {
         applicationId = "com.gmusic.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 38
-        versionName = "3.0.3"
+        versionCode = 39
+        versionName = "3.0.4"
 
         vectorDrawables {
             useSupportLibrary = true

@@ -11,6 +11,7 @@ import com.gmusic.app.data.local.PlaylistTrackCrossRef
 import com.gmusic.app.data.local.SavedAlbumEntity
 import com.gmusic.app.data.local.SavedArtistEntity
 import com.gmusic.app.data.local.SearchHistoryEntity
+import com.gmusic.app.data.local.SettingsDataStore
 import com.gmusic.app.data.stream.NewPipeOkHttpDownloader
 import com.gmusic.app.domain.model.AlbumDetail
 import com.gmusic.app.domain.model.AlbumSummary
@@ -61,7 +62,8 @@ class MusicRepository @Inject constructor(
     private val innerTubeClient: InnerTubeClient,
     private val newPipeDownloader: NewPipeOkHttpDownloader,
     private val authCredentialStore: AuthCredentialStore,
-    private val syncScheduler: YtMusicSyncScheduler
+    private val syncScheduler: YtMusicSyncScheduler,
+    private val settingsDataStore: SettingsDataStore
 ) {
     private val repoScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -236,10 +238,16 @@ class MusicRepository @Inject constructor(
         dao.observeTrackById(trackId).map { it?.toDomain() }
 
     /**
-     * Risolve i metadati completi di un brano a partire dal suo ID (DB locale -> next/player/ricerca YouTube Music).
+     * Risolve i metadati completi di un brano a partire dal suo ID (DB locale -> next/player YouTube Music).
      */
     suspend fun resolveTrackById(trackId: String): Track? = withContext(Dispatchers.IO) {
-        val local = dao.getTrackById(trackId)?.toDomain()
+        val cleanId = trackId.trim()
+        // Gli ID YouTube Music sono esattamente stringhe di 11 caratteri (es. "dQw4w9WgXcQ")
+        // Non eseguire MAI chiamate API di rete se l'ID non è un videoId valido (evita richieste per nodi "tab_home", "root", ecc.)
+        if (!cleanId.matches(Regex("^[a-zA-Z0-9_-]{11}$"))) {
+            return@withContext dao.getTrackById(cleanId)?.toDomain()
+        }
+        val local = dao.getTrackById(cleanId)?.toDomain()
         if (local != null &&
             local.title != "Brano sconosciuto" &&
             local.title.isNotBlank() &&
@@ -249,15 +257,10 @@ class MusicRepository @Inject constructor(
         ) {
             return@withContext local
         }
-        val fromMeta = innerTubeClient.fetchTrackMetadata(trackId)
+        val fromMeta = innerTubeClient.fetchTrackMetadata(cleanId)
         if (fromMeta != null) {
             dao.upsertTrackPreservingFlags(fromMeta)
-            return@withContext dao.getTrackById(trackId)?.toDomain() ?: fromMeta
-        }
-        val fromSearch = innerTubeClient.searchSongs(trackId).firstOrNull { it.id == trackId }
-        if (fromSearch != null) {
-            dao.upsertTrackPreservingFlags(fromSearch)
-            return@withContext dao.getTrackById(trackId)?.toDomain() ?: fromSearch
+            return@withContext dao.getTrackById(cleanId)?.toDomain() ?: fromMeta
         }
         local?.takeIf { it.title != "Brano sconosciuto" && it.title.isNotBlank() }
     }
@@ -459,7 +462,10 @@ class MusicRepository @Inject constructor(
         dao.insertPlayHistory(PlayHistoryEntity(trackId = enriched.id))
         if (authCredentialStore.hasValidCookie()) {
             repoScope.launch {
-                innerTubeClient.reportPlayback(enriched.id)
+                val syncEnabled = settingsDataStore.settingsFlow.first().syncPlaybackToYouTube
+                if (syncEnabled) {
+                    innerTubeClient.reportPlayback(enriched.id)
+                }
             }
         }
     }

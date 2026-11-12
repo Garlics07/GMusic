@@ -207,7 +207,7 @@ class InnerTubeClient @Inject constructor(
         val payload = buildWebRemixPayload {
             put("input", input)
         }
-        val root = executeWebRemixPost("music/get_search_suggestions", payload) ?: return@withContext emptyList()
+        val root = executeWebRemixPost("music/get_search_suggestions", payload, requireAuth = false) ?: return@withContext emptyList()
         val suggestions = mutableListOf<String>()
         collectSearchSuggestions(root, suggestions)
         suggestions.distinct().take(8)
@@ -222,14 +222,14 @@ class InnerTubeClient @Inject constructor(
             put("query", query)
             put("params", PARAMS_SONGS_ONLY)
         }
-        val root = executeWebRemixPost("search", payload)
+        val root = executeWebRemixPost("search", payload, requireAuth = false)
             ?: throw IOException("InnerTube searchSongs failed")
         val tracks = mutableListOf<Track>()
         collectMusicResponsiveListItems(root, tracks, onlyAudioSongs = true)
         if (tracks.isEmpty()) {
             // Fallback senza filtro params ma scartando comunque qualsiasi VIDEO_TYPE_OMV / UGC
             val fallbackPayload = buildWebRemixPayload { put("query", query) }
-            executeWebRemixPost("search", fallbackPayload)?.let { fbRoot ->
+            executeWebRemixPost("search", fallbackPayload, requireAuth = false)?.let { fbRoot ->
                 collectMusicResponsiveListItems(fbRoot, tracks, onlyAudioSongs = true)
             }
         }
@@ -241,7 +241,7 @@ class InnerTubeClient @Inject constructor(
             put("query", query)
             put("params", PARAMS_ARTISTS_ONLY)
         }
-        val root = executeWebRemixPost("search", payload) ?: return@withContext emptyList()
+        val root = executeWebRemixPost("search", payload, requireAuth = false) ?: return@withContext emptyList()
         val artists = mutableListOf<ArtistSummary>()
         collectArtistItems(root, artists)
         artists.distinctBy { it.id }
@@ -252,7 +252,7 @@ class InnerTubeClient @Inject constructor(
             put("query", query)
             put("params", PARAMS_ALBUMS_ONLY)
         }
-        val root = executeWebRemixPost("search", payload) ?: return@withContext emptyList()
+        val root = executeWebRemixPost("search", payload, requireAuth = false) ?: return@withContext emptyList()
         val albums = mutableListOf<AlbumSummary>()
         collectAlbumItems(root, albums)
         collectTwoRowItemAlbums(root, albums)
@@ -264,7 +264,7 @@ class InnerTubeClient @Inject constructor(
             put("query", query)
             put("params", PARAMS_PLAYLISTS_ONLY)
         }
-        val root = executeWebRemixPost("search", payload) ?: return@withContext emptyList()
+        val root = executeWebRemixPost("search", payload, requireAuth = false) ?: return@withContext emptyList()
         val playlists = mutableListOf<PlaylistSummary>()
         collectPlaylistItems(root, playlists, isLocal = false)
         collectTwoRowItemPlaylists(root, playlists, isLocal = false)
@@ -457,7 +457,7 @@ data class UserAccountInfo(
             val payload = buildWebRemixPayload {
                 put("browseId", browseId)
             }
-            val root = executeWebRemixPost("browse", payload) ?: return@withContext null
+            val root = executeWebRemixPost("browse", payload, requireAuth = !isAlbum && authCredentialStore.hasValidCookie()) ?: return@withContext null
             val tracks = mutableListOf<Track>()
             // Per gli album e raccolte musicali richiediamo categoricamente le tracce audio ufficiali (ATV), non video musicali
             collectMusicResponsiveListItems(root, tracks, onlyAudioSongs = true)
@@ -504,7 +504,7 @@ data class UserAccountInfo(
             val payload = buildWebRemixPayload {
                 put("browseId", artistId)
             }
-            val root = executeWebRemixPost("browse", payload) ?: return@withContext null
+            val root = executeWebRemixPost("browse", payload, requireAuth = false) ?: return@withContext null
             val name = findFirstHeaderTitle(root) ?: nameHint
             val headerThumb = findFirstHeaderThumbnail(root) ?: ""
             val songs = mutableListOf<Track>()
@@ -522,7 +522,7 @@ data class UserAccountInfo(
                         put("params", moreParams)
                     }
                 }
-                executeWebRemixPost("browse", morePayload)?.let { moreRoot ->
+                executeWebRemixPost("browse", morePayload, requireAuth = false)?.let { moreRoot ->
                     collectMusicResponsiveListItems(moreRoot, songs, onlyAudioSongs = true)
                 }
             }
@@ -600,7 +600,7 @@ data class UserAccountInfo(
                     put("selectedValues", JsonArray(listOf(JsonPrimitive("IT"))))
                 }
             }
-            executeWebRemixPost("browse", chartsPayload)?.let { root ->
+            executeWebRemixPost("browse", chartsPayload, requireAuth = false)?.let { root ->
                 collectMusicResponsiveListItems(root, chartsTracks, onlyAudioSongs = true)
                 collectTwoRowItemTracks(root, chartsTracks)
             }
@@ -609,7 +609,7 @@ data class UserAccountInfo(
         val explorePayload = buildWebRemixPayload {
             put("browseId", "FEmusic_explore")
         }
-        executeWebRemixPost("browse", explorePayload)?.let { root ->
+        executeWebRemixPost("browse", explorePayload, requireAuth = false)?.let { root ->
             collectMusicResponsiveListItems(root, chartsTracks, onlyAudioSongs = true)
             collectTwoRowItemAlbums(root, newAlbums)
         }
@@ -661,7 +661,7 @@ data class UserAccountInfo(
                     put("selectedValues", JsonArray(listOf(JsonPrimitive("IT"))))
                 }
             }
-            executeWebRemixPost("browse", chartsPayload)?.let { root ->
+            executeWebRemixPost("browse", chartsPayload, requireAuth = false)?.let { root ->
                 collectMusicResponsiveListItems(root, trending, onlyAudioSongs = true)
                 collectTwoRowItemTracks(root, trending)
             }
@@ -872,7 +872,11 @@ data class UserAccountInfo(
             }
         }
 
-    private fun executeWebRemixPost(endpoint: String, payload: JsonObject): JsonObject? {
+    private fun executeWebRemixPost(
+        endpoint: String,
+        payload: JsonObject,
+        requireAuth: Boolean = true
+    ): JsonObject? {
         return try {
             val (hl, gl) = getClientLocale()
             val reqBuilder = Request.Builder()
@@ -882,10 +886,10 @@ data class UserAccountInfo(
                 .header("X-YouTube-Client-Version", ClientProfile.WEB_REMIX_AUTH.clientVersion)
                 .header("Origin", "https://music.youtube.com")
                 .header("Referer", "https://music.youtube.com/")
-                .header("X-Goog-AuthUser", "0")
                 .post(payload.toString().toRequestBody(JSON_MEDIA_TYPE))
 
-            if (authCredentialStore.hasValidCookie()) {
+            if (requireAuth && authCredentialStore.hasValidCookie()) {
+                reqBuilder.header("X-Goog-AuthUser", "0")
                 authCredentialStore.getRawCookies()?.let { reqBuilder.header("Cookie", it) }
                 authCredentialStore.buildSapisidHashHeader("https://music.youtube.com")?.let {
                     reqBuilder.header("Authorization", it)
