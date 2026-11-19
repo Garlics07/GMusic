@@ -65,6 +65,7 @@ import com.gmusic.app.ui.components.TrackRowWithMenu
 @Composable
 fun SearchScreen(
     onPlayTrack: (Track, List<Track>) -> Unit,
+    onPlaySearchTrack: (Track) -> Unit,
     onNavigateToArtist: (String, String) -> Unit,
     onNavigateToAlbum: (String, String) -> Unit,
     modifier: Modifier = Modifier,
@@ -345,7 +346,7 @@ fun SearchScreen(
                         items(state.songResults, key = { "song_${it.id}" }) { track ->
                             TrackRowWithMenu(
                                 track = track,
-                                onPlay = { onPlayTrack(track, state.songResults) },
+                                onPlay = { onPlaySearchTrack(track) },
                                 onToggleLike = viewModel::toggleLike,
                                 onAddToPlaylistRequest = { trackForPlaylistDialog = it },
                                 onDownloadRequest = viewModel::downloadTrack,

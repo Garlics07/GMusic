@@ -157,6 +157,7 @@ fun ArtistScreen(
     nameHint: String,
     onBack: () -> Unit,
     onPlayTrack: (Track, List<Track>) -> Unit,
+    onPlaySingleTrack: (Track) -> Unit = { onPlayTrack(it, listOf(it)) },
     onNavigateToAlbum: (String, String) -> Unit,
     onNavigateToArtist: (String, String) -> Unit,
     modifier: Modifier = Modifier,
@@ -363,7 +364,7 @@ fun ArtistScreen(
                                                 artistName = current.name,
                                                 thumbnailUrl = single.thumbnailUrl
                                             )
-                                        onPlayTrack(match, listOf(match))
+                                        onPlaySingleTrack(match)
                                     }
                             ) {
                                 AsyncImage(

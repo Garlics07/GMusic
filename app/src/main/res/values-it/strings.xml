@@ -111,6 +111,13 @@
     <string name="player_unlike">Rimuovi dai preferiti</string>
     <string name="player_shuffle">Riproduzione casuale</string>
     <string name="player_repeat">Ripeti</string>
+    <string name="player_repeat_off">Ripeti: OFF</string>
+    <string name="player_repeat_all">Cicla playlist</string>
+    <string name="player_repeat_one">Cicla canzone</string>
+    <string name="player_repeat_one_on">Cicla canzone: ON</string>
+    <string name="player_repeat_one_off">Cicla canzone: OFF</string>
+    <string name="auto_action_shuffle_on">Casuale: ON</string>
+    <string name="auto_action_shuffle_off">Casuale: OFF</string>
     <string name="player_play">Riproduci</string>
     <string name="player_pause">Pausa</string>
     <string name="player_skip_next">Brano successivo</string>
@@ -201,7 +208,9 @@
     <string name="menu_download_track">Scarica brano</string>
     <string name="menu_remove_download">Elimina download</string>
     <string name="downloading_in_progress">Download in corso…</string>
-    <string name="settings_changelog_v304_title">v3.0.4 (Attuale) - Privacy Totale &amp; Zero Inquinamento Cronologia YouTube</string>
+    <string name="settings_changelog_v305_title">v3.0.5 (Attuale) - Coda Correlata da Ricerca &amp; Shuffle/Cicla su Android Auto</string>
+    <string name="settings_changelog_v305_desc">• Coda dai correlati nella Ricerca: riproducendo un brano dalla ricerca (Mobile, Android Auto e comandi vocali) la coda viene creata dai brani correlati invece che dai risultati di ricerca\n• Controlli Android Auto: aggiunti i pulsanti Casuale (Shuffle) e Ripeti (Cicla playlist / Cicla canzone) nella schermata In riproduzione, sincronizzati con Mobile\n• Ripetizione intelligente (Mobile e Android Auto): Cicla playlist è disponibile solo nei contesti playlist/raccolta; per brani singoli o radio è disponibile solo Cicla canzone</string>
+    <string name="settings_changelog_v304_title">v3.0.4 - Privacy Totale &amp; Zero Inquinamento Cronologia YouTube</string>
     <string name="settings_changelog_v304_desc">• Ricerche anonime: ricerche brani, artisti, album e suggerimenti eseguiti senza cookie account per non inquinare la cronologia ricerche di Google/YouTube\n• Risolto il salvataggio dei nodi interni nella cronologia ricerche (tab_home, root, tab_search, tab_library, lib_liked)\n• Nuovo toggle privacy nelle Impostazioni: sincronizzazione ascolti con la cronologia YouTube disattivata per impostazione predefinita\n• Protezione ID brani: validazione rigorosa dei codici video YouTube (11 caratteri) che impedisce ricerche accidentali\n• Risoluzione ottimizzata dei nodi Android Auto</string>
     <string name="settings_changelog_v303_title">v3.0.3 - Reattività Navigazione &amp; Fix UI Home</string>
     <string name="settings_changelog_v303_desc">• Sfondo card Canzoni Preferite in Home a tinta unita verde pieno\n• Transizioni di navigazione scattanti a 150ms in tutta l\'app\n• Blocco dei tocchi accidentali in uscita dalle categorie di Libreria (nessuna riproduzione o apertura involontaria di brani/album)\n• Navigazione Libreria fluida e immediata con pulizia automatica dello stack\n• Ottimizzazione sincronizzazione libreria con riduzione del carico di rete e database</string>

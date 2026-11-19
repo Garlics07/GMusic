@@ -95,6 +95,7 @@ fun HomeScreen(
     onOpenLikedSongs: () -> Unit,
     onOpenPlaylist: (String) -> Unit,
     onPlayTrack: (Track, List<Track>) -> Unit,
+    onPlayMix: (Track, List<Track>) -> Unit = onPlayTrack,
     onNavigateToArtist: (String, String) -> Unit,
     onNavigateToAlbum: (String, String) -> Unit,
     contentStartPadding: Dp = 16.dp,
@@ -340,7 +341,7 @@ fun HomeScreen(
                                 val queue = item.tracks.ifEmpty { section.tracks }
                                 val first = queue.firstOrNull()
                                 if (first != null) {
-                                    onPlayTrack(first, queue)
+                                    onPlayMix(first, queue)
                                 } else if (item.id.isNotBlank()) {
                                     onNavigateToAlbum(item.id, item.title)
                                 }

@@ -613,14 +613,12 @@ fun FullScreenPlayerSheet(
                             ) {
                                 Icon(Icons.Filled.SkipNext, contentDescription = null, modifier = Modifier.size(28.dp))
                             }
-                            IconButton(onClick = onCycleRepeat) {
-                                Icon(
-                                    imageVector = if (state.repeatMode == Player.REPEAT_MODE_ONE) Icons.Filled.RepeatOne else Icons.Filled.Repeat,
-                                    contentDescription = stringResource(R.string.player_repeat),
-                                    tint = if (state.repeatMode != Player.REPEAT_MODE_OFF) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
+                            RepeatModeIconButton(
+                                repeatMode = state.repeatMode,
+                                isPlaylistContext = state.isPlaylistContext,
+                                onClick = onCycleRepeat,
+                                iconModifier = Modifier.size(22.dp)
+                            )
                         }
                     }
 
@@ -985,21 +983,11 @@ fun FullScreenPlayerSheet(
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    IconButton(onClick = onCycleRepeat) {
-                        Icon(
-                            imageVector = if (state.repeatMode == Player.REPEAT_MODE_ONE) {
-                                Icons.Filled.RepeatOne
-                            } else {
-                                Icons.Filled.Repeat
-                            },
-                            contentDescription = stringResource(R.string.player_repeat),
-                            tint = if (state.repeatMode != Player.REPEAT_MODE_OFF) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            }
-                        )
-                    }
+                    RepeatModeIconButton(
+                        repeatMode = state.repeatMode,
+                        isPlaylistContext = state.isPlaylistContext,
+                        onClick = onCycleRepeat
+                    )
                 }
 
                 // Barra azioni secondaria: Testo (Lyrics) e Coda (Queue)
@@ -1238,6 +1226,39 @@ private fun SyncedLyricsSheetContent(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun RepeatModeIconButton(
+    repeatMode: Int,
+    isPlaylistContext: Boolean,
+    onClick: () -> Unit,
+    iconModifier: Modifier = Modifier
+) {
+    val icon = if (!isPlaylistContext || repeatMode == Player.REPEAT_MODE_ONE) {
+        Icons.Filled.RepeatOne
+    } else {
+        Icons.Filled.Repeat
+    }
+    val tint = if (repeatMode != Player.REPEAT_MODE_OFF) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    val descRes = when {
+        !isPlaylistContext -> R.string.player_repeat_one
+        repeatMode == Player.REPEAT_MODE_ALL -> R.string.player_repeat_all
+        repeatMode == Player.REPEAT_MODE_ONE -> R.string.player_repeat_one
+        else -> R.string.player_repeat
+    }
+    IconButton(onClick = onClick) {
+        Icon(
+            imageVector = icon,
+            contentDescription = stringResource(descRes),
+            tint = tint,
+            modifier = iconModifier
+        )
     }
 }
 

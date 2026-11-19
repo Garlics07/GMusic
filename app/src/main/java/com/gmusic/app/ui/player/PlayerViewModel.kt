@@ -58,12 +58,23 @@ data class PlayerUiState(
     val durationMs: Long = 0L,
     val shuffleEnabled: Boolean = false,
     val repeatMode: Int = Player.REPEAT_MODE_OFF,
+    val isPlaylistContext: Boolean = false,
     val isFullScreenPlayerOpen: Boolean = false,
     val lyrics: TrackLyrics? = null,
     val isQueueSheetOpen: Boolean = false,
     val isLyricsSheetOpen: Boolean = false,
     val adaptiveArtworkColor: Color? = null,
     val adaptiveColorEnabled: Boolean = false
+)
+
+private data class PendingPlayRequest(
+    val track: Track,
+    val queueContext: List<Track>,
+    val isArtistPlayback: Boolean = false,
+    val artistName: String? = null,
+    val artistId: String? = null,
+    val isPlaylistContext: Boolean = false,
+    val isSearchResult: Boolean = false
 )
 
 @HiltViewModel
@@ -92,7 +103,7 @@ class PlayerViewModel @Inject constructor(
     private var likeObserverJob: Job? = null
     private var lyricsAndPaletteJob: Job? = null
     private var lastProcessedTrackId: String? = null
-    private var pendingPlayRequest: Pair<Track, List<Track>>? = null
+    private var pendingPlayRequest: PendingPlayRequest? = null
     private val json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = true
@@ -119,6 +130,7 @@ class PlayerViewModel @Inject constructor(
                 if (restoredQueue.isNotEmpty()) {
                     val safeIdx = saved.lastQueueIndex.coerceIn(0, restoredQueue.lastIndex)
                     val track = restoredQueue[safeIdx]
+                    val isPlaylist = saved.lastIsPlaylistContext
                     _uiState.update { state ->
                         if (state.currentTrack == null) {
                             state.copy(
@@ -126,7 +138,8 @@ class PlayerViewModel @Inject constructor(
                                 queue = restoredQueue,
                                 currentQueueIndex = safeIdx,
                                 currentPositionMs = saved.lastPositionMs.coerceAtLeast(0L),
-                                durationMs = (track.durationSeconds * 1000L).coerceAtLeast(0L)
+                                durationMs = (track.durationSeconds * 1000L).coerceAtLeast(0L),
+                                isPlaylistContext = isPlaylist
                             )
                         } else state
                     }
@@ -137,7 +150,9 @@ class PlayerViewModel @Inject constructor(
                     }
                     val controller = mediaController
                     if (controller != null && controller.mediaItemCount == 0) {
-                        val mediaItems = restoredQueue.map { TrackMediaItemMapper.toMediaItem(it) }
+                        val mediaItems = restoredQueue.map {
+                            TrackMediaItemMapper.toMediaItem(it, isPlaylistContext = isPlaylist)
+                        }
                         controller.setMediaItems(mediaItems, safeIdx, saved.lastPositionMs.coerceAtLeast(0L))
                         controller.playWhenReady = false
                         controller.prepare()
@@ -147,12 +162,22 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
-    private fun persistStateToSettings(queue: List<Track>, index: Int, positionMs: Long) {
+    private fun persistStateToSettings(
+        queue: List<Track>,
+        index: Int,
+        positionMs: Long,
+        isPlaylistContext: Boolean = _uiState.value.isPlaylistContext
+    ) {
         if (queue.isEmpty()) return
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val encoded = json.encodeToString(queue)
-                settingsDataStore.savePlaybackState(encoded, index.coerceAtLeast(0), positionMs.coerceAtLeast(0L))
+                settingsDataStore.savePlaybackState(
+                    queueJson = encoded,
+                    queueIndex = index.coerceAtLeast(0),
+                    positionMs = positionMs.coerceAtLeast(0L),
+                    isPlaylistContext = isPlaylistContext
+                )
             } catch (_: Exception) {
             }
         }
@@ -180,9 +205,20 @@ class PlayerViewModel @Inject constructor(
                     mediaController = controller
                     attachControllerListener(controller)
                     syncStateFromController(controller)
-                    pendingPlayRequest?.let { (track, queue) ->
+                    pendingPlayRequest?.let { pending ->
                         pendingPlayRequest = null
-                        playTrack(track, queue)
+                        if (pending.isSearchResult) {
+                            playTrackFromSearch(pending.track)
+                        } else {
+                            playTrack(
+                                track = pending.track,
+                                queueContext = pending.queueContext,
+                                isArtistPlayback = pending.isArtistPlayback,
+                                artistName = pending.artistName,
+                                artistId = pending.artistId,
+                                isPlaylistContext = pending.isPlaylistContext
+                            )
+                        }
                     }
                 } catch (_: Exception) {
                 }
@@ -208,7 +244,10 @@ class PlayerViewModel @Inject constructor(
             val existingQueue = _uiState.value.queue
             if (existingQueue.isNotEmpty()) {
                 val safeIdx = _uiState.value.currentQueueIndex.coerceIn(0, existingQueue.lastIndex)
-                val mediaItems = existingQueue.map { TrackMediaItemMapper.toMediaItem(it) }
+                val isPlaylist = _uiState.value.isPlaylistContext
+                val mediaItems = existingQueue.map {
+                    TrackMediaItemMapper.toMediaItem(it, isPlaylistContext = isPlaylist)
+                }
                 controller.setMediaItems(mediaItems, safeIdx, _uiState.value.currentPositionMs)
                 controller.playWhenReady = false
                 controller.prepare()
@@ -217,6 +256,7 @@ class PlayerViewModel @Inject constructor(
         }
         val currentItem = controller.currentMediaItem
         val track = currentItem?.let { TrackMediaItemMapper.fromMediaItem(it) }
+        val isPlaylist = TrackMediaItemMapper.isPlaylistContext(currentItem)
         val queueList = (0 until controller.mediaItemCount).map { idx ->
             TrackMediaItemMapper.fromMediaItem(controller.getMediaItemAt(idx))
         }
@@ -233,7 +273,8 @@ class PlayerViewModel @Inject constructor(
                 currentPositionMs = controller.currentPosition.coerceAtLeast(0L),
                 durationMs = duration.coerceAtLeast(0L),
                 shuffleEnabled = controller.shuffleModeEnabled,
-                repeatMode = controller.repeatMode
+                repeatMode = controller.repeatMode,
+                isPlaylistContext = isPlaylist
             )
         }
 
@@ -356,7 +397,7 @@ class PlayerViewModel @Inject constructor(
                     tickCount++
                     if (tickCount % 16 == 0) {
                         val state = _uiState.value
-                        persistStateToSettings(state.queue, state.currentQueueIndex, pos)
+                        persistStateToSettings(state.queue, state.currentQueueIndex, pos, state.isPlaylistContext)
                     }
                 }
                 delay(300L)
@@ -364,20 +405,62 @@ class PlayerViewModel @Inject constructor(
         }
     }
 
+    fun playTrackFromSearch(track: Track) {
+        persistStateToSettings(listOf(track), 0, 0L, isPlaylistContext = false)
+        val controller = mediaController
+        if (controller == null) {
+            pendingPlayRequest = PendingPlayRequest(
+                track = track,
+                queueContext = listOf(track),
+                isPlaylistContext = false,
+                isSearchResult = true
+            )
+            return
+        }
+        if (controller.repeatMode == Player.REPEAT_MODE_ALL) {
+            controller.repeatMode = Player.REPEAT_MODE_OFF
+        }
+        val searchItem = TrackMediaItemMapper.toMediaItem(
+            track = track,
+            isPlaylistContext = false,
+            isSearchResult = true
+        )
+        controller.setMediaItems(listOf(searchItem), 0, 0L)
+        controller.prepare()
+        controller.play()
+    }
+
     fun playFromSearchQuery(query: String) {
         viewModelScope.launch {
-            val tracks = withContext(Dispatchers.IO) {
-                val direct = musicRepository.searchSongs(query)
-                if (direct.isNotEmpty()) direct else {
-                    val full = musicRepository.searchAllCategories(query)
-                    if (full.artists.isNotEmpty()) {
-                        val art = full.artists.first()
-                        musicRepository.fetchArtistDetail(art.id, art.name).popularTracks.ifEmpty { full.songs }
-                    } else full.songs
+            val direct = withContext(Dispatchers.IO) {
+                musicRepository.searchSongs(query)
+            }
+            if (direct.isNotEmpty()) {
+                playTrackFromSearch(direct.first())
+                return@launch
+            }
+            val full = withContext(Dispatchers.IO) {
+                musicRepository.searchAllCategories(query)
+            }
+            if (full.artists.isNotEmpty()) {
+                val art = full.artists.first()
+                val artistTracks = withContext(Dispatchers.IO) {
+                    musicRepository.fetchArtistDetail(art.id, art.name).popularTracks
+                }
+                if (artistTracks.isNotEmpty()) {
+                    playTrack(
+                        track = artistTracks.first(),
+                        queueContext = artistTracks,
+                        isArtistPlayback = true,
+                        artistName = art.name,
+                        artistId = art.id,
+                        isPlaylistContext = true
+                    )
+                    return@launch
                 }
             }
-            if (tracks.isNotEmpty()) {
-                playTrack(tracks.first(), tracks)
+            if (full.songs.isNotEmpty()) {
+                playTrackFromSearch(full.songs.first())
             }
         }
     }
@@ -392,7 +475,7 @@ class PlayerViewModel @Inject constructor(
                 artistName = "...",
                 thumbnailUrl = "https://i.ytimg.com/vi/$videoId/hqdefault.jpg"
             )
-            playTrack(initialTrack)
+            playTrack(initialTrack, isPlaylistContext = false)
             _uiState.update { it.copy(isFullScreenPlayerOpen = true) }
 
             if (initialTrack.title == "YouTube Music" || initialTrack.artistName == "...") {
@@ -418,7 +501,8 @@ class PlayerViewModel @Inject constructor(
             if (detail.tracks.isNotEmpty()) {
                 playTrack(
                     track = detail.tracks.first(),
-                    queueContext = detail.tracks
+                    queueContext = detail.tracks,
+                    isPlaylistContext = true
                 )
                 _uiState.update { it.copy(isFullScreenPlayerOpen = true) }
             }
@@ -430,21 +514,33 @@ class PlayerViewModel @Inject constructor(
         queueContext: List<Track> = listOf(track),
         isArtistPlayback: Boolean = false,
         artistName: String? = null,
-        artistId: String? = null
+        artistId: String? = null,
+        isPlaylistContext: Boolean = false
     ) {
         val items = queueContext.ifEmpty { listOf(track) }
         val startIndex = items.indexOfFirst { it.id == track.id }.coerceAtLeast(0)
-        persistStateToSettings(items, startIndex, 0L)
+        persistStateToSettings(items, startIndex, 0L, isPlaylistContext = isPlaylistContext)
         val controller = mediaController
         if (controller == null) {
-            pendingPlayRequest = track to queueContext
+            pendingPlayRequest = PendingPlayRequest(
+                track = track,
+                queueContext = queueContext,
+                isArtistPlayback = isArtistPlayback,
+                artistName = artistName,
+                artistId = artistId,
+                isPlaylistContext = isPlaylistContext
+            )
             return
+        }
+        if (!isPlaylistContext && controller.repeatMode == Player.REPEAT_MODE_ALL) {
+            controller.repeatMode = Player.REPEAT_MODE_OFF
         }
         val mediaItems = items.map {
             TrackMediaItemMapper.toMediaItem(
                 track = it,
                 artistContextName = if (isArtistPlayback) (artistName ?: track.artistName) else null,
-                artistContextId = if (isArtistPlayback) (artistId ?: track.artistId) else null
+                artistContextId = if (isArtistPlayback) (artistId ?: track.artistId) else null,
+                isPlaylistContext = isPlaylistContext
             )
         }
         controller.setMediaItems(mediaItems, startIndex, 0L)
@@ -538,10 +634,18 @@ class PlayerViewModel @Inject constructor(
 
     fun cycleRepeatMode() {
         val controller = mediaController ?: return
-        controller.repeatMode = when (controller.repeatMode) {
-            Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
-            Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
-            else -> Player.REPEAT_MODE_OFF
+        val isPlaylist = _uiState.value.isPlaylistContext
+        controller.repeatMode = if (isPlaylist) {
+            when (controller.repeatMode) {
+                Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+                Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+                else -> Player.REPEAT_MODE_OFF
+            }
+        } else {
+            when (controller.repeatMode) {
+                Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ONE
+                else -> Player.REPEAT_MODE_OFF
+            }
         }
     }
 

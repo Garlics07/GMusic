@@ -495,6 +495,28 @@ class MusicRepository @Inject constructor(
     }
 
     /**
+     * Costruisce una coda iniziale partendo dal brano riprodotto seguito dai brani correlati
+     * dalla radio YouTube Music (usata quando si avvia la riproduzione dalla ricerca).
+     */
+    suspend fun fetchRelatedQueueForTrack(
+        track: Track,
+        limit: Int = 20
+    ): List<Track> = withContext(Dispatchers.IO) {
+        val candidates = try {
+            innerTubeClient.fetchRadioTracks(track.id).ifEmpty {
+                searchSongs("${track.artistName} brani")
+            }
+        } catch (_: Exception) {
+            emptyList()
+        }
+        val related = candidates
+            .filter { it.id != track.id }
+            .distinctBy { it.id }
+            .take(limit)
+        listOf(track) + related
+    }
+
+    /**
      * Infinite Autoplay: recupera fino a 10 brani dalla radio YT Music del brano corrente,
      * escludendo i brani già in coda o nella cronologia recente. Esegue su IO.
      */

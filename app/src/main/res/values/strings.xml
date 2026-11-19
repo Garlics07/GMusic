@@ -111,6 +111,13 @@
     <string name="player_unlike">Remove from Favorites</string>
     <string name="player_shuffle">Shuffle</string>
     <string name="player_repeat">Repeat</string>
+    <string name="player_repeat_off">Repeat: OFF</string>
+    <string name="player_repeat_all">Repeat Playlist</string>
+    <string name="player_repeat_one">Repeat Song</string>
+    <string name="player_repeat_one_on">Repeat Song: ON</string>
+    <string name="player_repeat_one_off">Repeat Song: OFF</string>
+    <string name="auto_action_shuffle_on">Shuffle: ON</string>
+    <string name="auto_action_shuffle_off">Shuffle: OFF</string>
     <string name="player_play">Play</string>
     <string name="player_pause">Pause</string>
     <string name="player_skip_next">Next track</string>
@@ -201,7 +208,9 @@
     <string name="menu_download_track">Download track</string>
     <string name="menu_remove_download">Delete download</string>
     <string name="downloading_in_progress">Downloading…</string>
-    <string name="settings_changelog_v304_title">v3.0.4 (Current) - Total Privacy &amp; Zero YouTube History Pollution</string>
+    <string name="settings_changelog_v305_title">v3.0.5 (Current) - Related Queue from Search &amp; Android Auto Shuffle/Repeat</string>
+    <string name="settings_changelog_v305_desc">• Search playback queue: playing a song from Search (Mobile, Android Auto, and Voice) now creates a queue of related YouTube Music radio tracks instead of search results\n• Android Auto controls: added Shuffle and Repeat (Playlist / Song) buttons directly in the Now Playing screen, synced with Mobile\n• Smart Repeat mode (Mobile &amp; Android Auto): Repeat Playlist is available only when playing a playlist/collection; for single tracks or radio queues only Repeat Song is available</string>
+    <string name="settings_changelog_v304_title">v3.0.4 - Total Privacy &amp; Zero YouTube History Pollution</string>
     <string name="settings_changelog_v304_desc">• Anonymous searches: searches for tracks, artists, albums, and suggestions run without account cookies to keep Google/YouTube search history clean\n• Fixed internal node logging in search history (tab_home, root, tab_search, tab_library, lib_liked)\n• New privacy toggle in Settings: YouTube watch history playback synchronization disabled by default\n• Track ID protection: strict 11-character YouTube video ID validation preventing accidental search fallbacks\n• Optimized Android Auto container resolution</string>
     <string name="settings_changelog_v303_title">v3.0.3 - Navigation Responsiveness &amp; Home UI Fixes</string>
     <string name="settings_changelog_v303_desc">• Solid brand green background for Liked Songs card on Home\n• Snappy 150ms navigation transitions across the entire app\n• Touch guard during category exit preventing accidental song playback or album opening\n• Smooth and immediate Library navigation with automatic backstack cleanup\n• Optimized library sync reducing network requests and database overhead</string>

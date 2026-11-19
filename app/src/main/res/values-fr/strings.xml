@@ -110,6 +110,13 @@
     <string name="player_unlike">Retirer des favoris</string>
     <string name="player_shuffle">Lecture aléatoire</string>
     <string name="player_repeat">Répéter</string>
+    <string name="player_repeat_off">Répéter : DÉSACT.</string>
+    <string name="player_repeat_all">Répéter la playlist</string>
+    <string name="player_repeat_one">Répéter le titre</string>
+    <string name="player_repeat_one_on">Répéter le titre : ACT.</string>
+    <string name="player_repeat_one_off">Répéter le titre : DÉSACT.</string>
+    <string name="auto_action_shuffle_on">Aléatoire : ACT.</string>
+    <string name="auto_action_shuffle_off">Aléatoire : DÉSACT.</string>
     <string name="error_stream_resolved_skip">Impossible de lire le titre, passage au suivant…</string>
     <string name="added_to_playlist_toast">Titre ajouté à la playlist</string>
 
@@ -193,7 +200,9 @@
     <string name="settings_sync_playback_yt">Synchroniser les écoutes avec l\'historique YouTube</string>
     <string name="settings_sync_playback_yt_desc">Si désactivé (recommandé), les titres écoutés dans GMusic n\'apparaîtront pas dans l\'historique de lecture de votre compte Google/YouTube.</string>
     <string name="settings_privacy_search_info">Toutes les recherches, suggestions et explorations du catalogue dans GMusic sont 100% anonymes et ne sont jamais enregistrées dans l\'historique de recherche Google/YouTube.</string>
-    <string name="settings_changelog_v304_title">v3.0.4 (Actuelle) - Confidentialité Totale &amp; Zéro Pollution de l\'Historique YouTube</string>
+    <string name="settings_changelog_v305_title">v3.0.5 (Actuelle) - File Associée depuis la Recherche &amp; Aléatoire/Répéter sur Android Auto</string>
+    <string name="settings_changelog_v305_desc">• File associée lors d\'une recherche : lire un titre depuis la recherche (Mobile, Android Auto et voix) crée désormais une file de titres associés au lieu des résultats de recherche\n• Contrôles Android Auto : ajout des boutons Aléatoire et Répéter (Playlist / Titre) dans l\'écran En cours de lecture, synchronisés avec le mobile\n• Répétition intelligente (Mobile et Android Auto) : Répéter la playlist est disponible uniquement dans une playlist/collection ; sinon seul Répéter le titre est proposé</string>
+    <string name="settings_changelog_v304_title">v3.0.4 - Confidentialité Totale &amp; Zéro Pollution de l\'Historique YouTube</string>
     <string name="settings_changelog_v304_desc">• Recherches anonymes : recherches de titres, artistes, albums et suggestions exécutées sans cookies de compte pour préserver l\'historique Google/YouTube\n• Correction de l\'enregistrement des nœuds internes dans l\'historique (tab_home, root, tab_search, tab_library, lib_liked)\n• Nouveau commutateur de confidentialité dans les Paramètres : synchronisation des écoutes désactivée par défaut\n• Protection des ID de pistes : validation stricte à 11 caractères pour les ID YouTube\n• Résolution optimisée des nœuds Android Auto</string>
     <string name="settings_changelog_v303_title">v3.0.3 - Réactivité de Navigation &amp; UI Accueil</string>
     <string name="settings_changelog_v303_desc">• Fond de la carte Titres Likés sur l\'Accueil en vert marque uni\n• Transitions de navigation rapides de 150ms dans toute l\'application\n• Protection contre les clics accidentels en quittant les catégories de la bibliothèque\n• Navigation fluide et immédiate avec nettoyage automatique de l\'historique\n• Optimisation de la synchronisation réduisant les requêtes réseau et base de données</string>

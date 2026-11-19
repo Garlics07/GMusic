@@ -59,7 +59,8 @@ data class UserSettings(
     val syncPlaybackToYouTube: Boolean = false,
     val lastQueueJson: String = "",
     val lastQueueIndex: Int = 0,
-    val lastPositionMs: Long = 0L
+    val lastPositionMs: Long = 0L,
+    val lastIsPlaylistContext: Boolean = false
 ) {
     val pipedInstances: List<String>
         get() = pipedInstancesCsv.split(",").map { it.trim().trimEnd('/') }.filter { it.isNotEmpty() }
@@ -101,6 +102,7 @@ class SettingsDataStore @Inject constructor(
         val LAST_QUEUE_JSON = stringPreferencesKey("last_queue_json")
         val LAST_QUEUE_INDEX = intPreferencesKey("last_queue_index")
         val LAST_POSITION_MS = longPreferencesKey("last_position_ms")
+        val LAST_IS_PLAYLIST_CONTEXT = booleanPreferencesKey("last_is_playlist_context")
     }
 
     val settingsFlow: Flow<UserSettings> = context.dataStore.data.map { prefs ->
@@ -127,7 +129,8 @@ class SettingsDataStore @Inject constructor(
             syncPlaybackToYouTube = prefs[Keys.SYNC_PLAYBACK_TO_YT] ?: false,
             lastQueueJson = prefs[Keys.LAST_QUEUE_JSON] ?: "",
             lastQueueIndex = prefs[Keys.LAST_QUEUE_INDEX] ?: 0,
-            lastPositionMs = prefs[Keys.LAST_POSITION_MS] ?: 0L
+            lastPositionMs = prefs[Keys.LAST_POSITION_MS] ?: 0L,
+            lastIsPlaylistContext = prefs[Keys.LAST_IS_PLAYLIST_CONTEXT] ?: false
         )
     }
 
@@ -189,11 +192,17 @@ class SettingsDataStore @Inject constructor(
         context.dataStore.edit { it[Keys.SYNC_PLAYBACK_TO_YT] = enabled }
     }
 
-    suspend fun savePlaybackState(queueJson: String, queueIndex: Int, positionMs: Long) {
+    suspend fun savePlaybackState(
+        queueJson: String,
+        queueIndex: Int,
+        positionMs: Long,
+        isPlaylistContext: Boolean = false
+    ) {
         context.dataStore.edit {
             it[Keys.LAST_QUEUE_JSON] = queueJson
             it[Keys.LAST_QUEUE_INDEX] = queueIndex.coerceAtLeast(0)
             it[Keys.LAST_POSITION_MS] = positionMs.coerceAtLeast(0L)
+            it[Keys.LAST_IS_PLAYLIST_CONTEXT] = isPlaylistContext
         }
     }
 }

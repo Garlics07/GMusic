@@ -253,7 +253,12 @@ fun GMusicRoot(
                                         onOpenPlaylist = { playlistId ->
                                             navController.navigate("playlist/${Uri.encode(playlistId)}")
                                         },
-                                        onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
+                                        onPlayTrack = { track, queue ->
+                                            playerViewModel.playTrack(track, queue, isPlaylistContext = false)
+                                        },
+                                        onPlayMix = { track, queue ->
+                                            playerViewModel.playTrack(track, queue, isPlaylistContext = true)
+                                        },
                                         onNavigateToArtist = navigateToArtist,
                                         onNavigateToAlbum = navigateToAlbum,
                                         contentStartPadding = contentStartPadding,
@@ -262,7 +267,12 @@ fun GMusicRoot(
                                 }
                                 composable(TopLevelDestination.SEARCH.route) {
                                     SearchScreen(
-                                        onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
+                                        onPlayTrack = { track, queue ->
+                                            playerViewModel.playTrack(track, queue, isPlaylistContext = false)
+                                        },
+                                        onPlaySearchTrack = { track ->
+                                            playerViewModel.playTrackFromSearch(track)
+                                        },
                                         onNavigateToArtist = navigateToArtist,
                                         onNavigateToAlbum = navigateToAlbum,
                                         modifier = Modifier
@@ -284,7 +294,9 @@ fun GMusicRoot(
                                             navigateFromLibrary("playlist/${Uri.encode(playlistId)}")
                                         },
                                         onOpenAlbum = navigateToAlbum,
-                                        onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
+                                        onPlayTrack = { track, queue ->
+                                            playerViewModel.playTrack(track, queue, isPlaylistContext = true)
+                                        },
                                         onOpenArtist = navigateToArtist,
                                         onOpenHistory = { navigateFromLibrary("history") },
                                         modifier = Modifier
@@ -336,7 +348,9 @@ fun GMusicRoot(
                                 composable("history") {
                                     HistoryScreen(
                                         onBack = { navController.popBackStack() },
-                                        onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
+                                        onPlayTrack = { track, queue ->
+                                            playerViewModel.playTrack(track, queue, isPlaylistContext = false)
+                                        },
                                         onNavigateToArtist = navigateToArtist,
                                         onNavigateToAlbum = navigateToAlbum,
                                         modifier = Modifier
@@ -350,7 +364,9 @@ fun GMusicRoot(
                                 composable("liked_songs") {
                                     LikedSongsScreen(
                                         onBack = { navController.popBackStack() },
-                                        onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
+                                        onPlayTrack = { track, queue ->
+                                            playerViewModel.playTrack(track, queue, isPlaylistContext = true)
+                                        },
                                         onNavigateToArtist = navigateToArtist,
                                         onNavigateToAlbum = navigateToAlbum,
                                         modifier = Modifier
@@ -364,7 +380,9 @@ fun GMusicRoot(
                                 composable("downloaded_songs") {
                                     DownloadedSongsScreen(
                                         onBack = { navController.popBackStack() },
-                                        onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
+                                        onPlayTrack = { track, queue ->
+                                            playerViewModel.playTrack(track, queue, isPlaylistContext = true)
+                                        },
                                         onNavigateToArtist = navigateToArtist,
                                         onNavigateToAlbum = navigateToAlbum,
                                         modifier = Modifier
@@ -383,7 +401,9 @@ fun GMusicRoot(
                                     PlaylistDetailScreen(
                                         playlistId = plId,
                                         onBack = { navController.popBackStack() },
-                                        onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
+                                        onPlayTrack = { track, queue ->
+                                            playerViewModel.playTrack(track, queue, isPlaylistContext = true)
+                                        },
                                         onNavigateToArtist = navigateToArtist,
                                         onNavigateToAlbum = navigateToAlbum,
                                         modifier = Modifier
@@ -408,7 +428,9 @@ fun GMusicRoot(
                                         albumId = albId,
                                         titleHint = title,
                                         onBack = { navController.popBackStack() },
-                                        onPlayTrack = { track, queue -> playerViewModel.playTrack(track, queue) },
+                                        onPlayTrack = { track, queue ->
+                                            playerViewModel.playTrack(track, queue, isPlaylistContext = true)
+                                        },
                                         onNavigateToArtist = navigateToArtist,
                                         modifier = Modifier
                                             .statusBarsPadding()
@@ -438,7 +460,15 @@ fun GMusicRoot(
                                                 queueContext = queue,
                                                 isArtistPlayback = true,
                                                 artistName = name,
-                                                artistId = artId
+                                                artistId = artId,
+                                                isPlaylistContext = true
+                                            )
+                                        },
+                                        onPlaySingleTrack = { track ->
+                                            playerViewModel.playTrack(
+                                                track = track,
+                                                queueContext = listOf(track),
+                                                isPlaylistContext = false
                                             )
                                         },
                                         onNavigateToAlbum = navigateToAlbum,

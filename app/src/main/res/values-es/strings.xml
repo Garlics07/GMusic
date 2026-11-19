@@ -110,6 +110,13 @@
     <string name="player_unlike">Quitar de favoritos</string>
     <string name="player_shuffle">Modo aleatorio</string>
     <string name="player_repeat">Repetir</string>
+    <string name="player_repeat_off">Repetir: DESACT.</string>
+    <string name="player_repeat_all">Repetir lista</string>
+    <string name="player_repeat_one">Repetir canción</string>
+    <string name="player_repeat_one_on">Repetir canción: ACT.</string>
+    <string name="player_repeat_one_off">Repetir canción: DESACT.</string>
+    <string name="auto_action_shuffle_on">Aleatorio: ACT.</string>
+    <string name="auto_action_shuffle_off">Aleatorio: DESACT.</string>
     <string name="error_stream_resolved_skip">No se puede reproducir la canción, pasando a la siguiente…</string>
     <string name="added_to_playlist_toast">Canción añadida a la lista</string>
 
@@ -193,7 +200,9 @@
     <string name="settings_sync_playback_yt">Sincronizar reproducciones con historial de YouTube</string>
     <string name="settings_sync_playback_yt_desc">Si está desactivado (recomendado), las canciones reproducidas en GMusic no aparecerán en el historial de reproducciones de tu cuenta Google/YouTube.</string>
     <string name="settings_privacy_search_info">Todas las búsquedas, sugerencias y exploración del catálogo en GMusic son 100% anónimas y nunca se guardan en el historial de búsqueda de Google/YouTube.</string>
-    <string name="settings_changelog_v304_title">v3.0.4 (Actual) - Privacidad Total &amp; Cero Contaminación del Historial de YouTube</string>
+    <string name="settings_changelog_v305_title">v3.0.5 (Actual) - Cola Relacionada en Búsqueda &amp; Aleatorio/Repetir en Android Auto</string>
+    <string name="settings_changelog_v305_desc">• Cola relacionada al buscar: al reproducir una canción desde la búsqueda (Móvil, Android Auto y voz) la cola se crea con temas relacionados en lugar de los resultados de búsqueda\n• Controles en Android Auto: añadidos los botones Aleatorio y Repetir (Lista / Canción) en reproducción, sincronizados con el móvil\n• Repetición inteligente (Móvil y Android Auto): Repetir lista solo aparece en listas/colecciones; fuera de una lista solo se muestra Repetir canción</string>
+    <string name="settings_changelog_v304_title">v3.0.4 - Privacidad Total &amp; Cero Contaminación del Historial de YouTube</string>
     <string name="settings_changelog_v304_desc">• Búsquedas anónimas: búsquedas de canciones, artistas, álbumes y sugerencias ejecutadas sin cookies de cuenta para mantener limpio el historial de Google/YouTube\n• Corregido el registro de nodos internos en el historial (tab_home, root, tab_search, tab_library, lib_liked)\n• Nuevo interruptor de privacidad en Ajustes: sincronización de reproducciones con el historial de YouTube desactivada por defecto\n• Protección de ID de canciones: validación estricta de 11 caracteres para IDs de YouTube\n• Resolución optimizada de nodos en Android Auto</string>
     <string name="settings_changelog_v303_title">v3.0.3 - Reactividad de Navegación &amp; UI Inicio</string>
     <string name="settings_changelog_v303_desc">• Fondo de Canciones Favoritas en Inicio en verde marca sólido\n• Transiciones de navegación rápidas de 150ms en toda la app\n• Protección contra toques accidentales al salir de categorías de biblioteca\n• Navegación de biblioteca fluida e inmediata con limpieza de historial\n• Optimización de sincronización reduciendo solicitudes de red y base de datos</string>

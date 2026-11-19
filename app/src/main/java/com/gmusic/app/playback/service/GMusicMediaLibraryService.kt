@@ -113,12 +113,18 @@ class GMusicMediaLibraryService : MediaLibraryService() {
     @Volatile private var activeArtistPlaybackName: String? = null
     @Volatile private var activeArtistPlaybackId: String? = null
     @Volatile private var lastSearchResults: List<MediaItem> = emptyList()
+    @Volatile private var lastSearchTrackIds: Set<String> = emptySet()
     @Volatile private var lastBrowsedTracks: List<Track> = emptyList()
+    @Volatile private var lastBrowsedIsPlaylistContext: Boolean = false
+    @Volatile private var lastBrowsedArtistName: String? = null
+    @Volatile private var lastBrowsedArtistId: String? = null
+    @Volatile private var currentTrackLikedState: Boolean = false
 
     private val retriedTrackIds = ConcurrentHashMap.newKeySet<String>()
     private val artworkBytesCache = ConcurrentHashMap<String, ByteArray>()
     private val knownTracks = ConcurrentHashMap<String, Track>()
     private val containerTracksCache = ConcurrentHashMap<String, List<Track>>()
+    private val containerIsPlaylistMap = ConcurrentHashMap<String, Boolean>()
     private val artistNameHints = ConcurrentHashMap<String, String>()
     private val albumTitleHints = ConcurrentHashMap<String, String>()
 
@@ -205,16 +211,25 @@ class GMusicMediaLibraryService : MediaLibraryService() {
         }
         if (restoredTracks.isNotEmpty() && player.mediaItemCount == 0) {
             restoredTracks.forEach { knownTracks[it.id] = it }
+            val isPlaylistCtx = saved.lastIsPlaylistContext
             val mediaItems = restoredTracks.map { track ->
                 val art = withContext(Dispatchers.IO) { fetchOrGetCachedArtwork(track.id, track.thumbnailUrl) }
-                TrackMediaItemMapper.toMediaItem(track, art)
+                TrackMediaItemMapper.toMediaItem(
+                    track = track,
+                    artworkBytes = art,
+                    isPlaylistContext = isPlaylistCtx
+                )
             }
             val safeIndex = saved.lastQueueIndex.coerceIn(0, mediaItems.lastIndex)
             val safePos = saved.lastPositionMs.coerceAtLeast(0L)
             player.setMediaItems(mediaItems, safeIndex, safePos)
             player.playWhenReady = false
             player.prepare()
-            Log.i(TAG, "Stato player ripristinato: ${restoredTracks.size} brani, indice=$safeIndex, pos=${safePos}ms")
+            if (!isPlaylistCtx && player.repeatMode == Player.REPEAT_MODE_ALL) {
+                player.repeatMode = Player.REPEAT_MODE_OFF
+            }
+            updateSessionCustomLayout()
+            Log.i(TAG, "Stato player ripristinato: ${restoredTracks.size} brani, indice=$safeIndex, pos=${safePos}ms, playlist=$isPlaylistCtx")
         }
     }
 
@@ -226,10 +241,11 @@ class GMusicMediaLibraryService : MediaLibraryService() {
         }
         val currentIndex = player.currentMediaItemIndex.coerceAtLeast(0)
         val currentPos = player.currentPosition.coerceAtLeast(0L)
+        val isPlaylistCtx = TrackMediaItemMapper.isPlaylistContext(player.currentMediaItem)
         serviceScope.launch(Dispatchers.IO) {
             try {
                 val encoded = json.encodeToString(tracks)
-                settingsDataStore.savePlaybackState(encoded, currentIndex, currentPos)
+                settingsDataStore.savePlaybackState(encoded, currentIndex, currentPos, isPlaylistCtx)
             } catch (e: Exception) {
                 Log.w(TAG, "Errore salvataggio stato player: ${e.message}")
             }
@@ -305,23 +321,42 @@ class GMusicMediaLibraryService : MediaLibraryService() {
                 persistCurrentPlaybackState()
             }
 
+            override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+                updateSessionCustomLayout()
+            }
+
+            override fun onRepeatModeChanged(repeatMode: Int) {
+                if (repeatMode == Player.REPEAT_MODE_ALL &&
+                    !TrackMediaItemMapper.isPlaylistContext(player.currentMediaItem)
+                ) {
+                    player.repeatMode = Player.REPEAT_MODE_OFF
+                    return
+                }
+                updateSessionCustomLayout()
+            }
+
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 if (mediaItem == null) {
                     syncWidgetAndCustomLayout()
                     return
                 }
                 val currentTrack = TrackMediaItemMapper.fromMediaItem(mediaItem)
+                val isPlaylistCtx = TrackMediaItemMapper.isPlaylistContext(mediaItem)
                 knownTracks[currentTrack.id] = currentTrack
                 retriedTrackIds.remove(currentTrack.id)
                 Log.i(TAG, "In riproduzione: ${currentTrack.title} - ${currentTrack.artistName} (${currentTrack.id})")
 
-                // Aggiorna il contesto artista attivo se presente o deducibile dalla coda
+                if (!isPlaylistCtx && player.repeatMode == Player.REPEAT_MODE_ALL) {
+                    player.repeatMode = Player.REPEAT_MODE_OFF
+                }
+
+                // Aggiorna il contesto artista attivo se presente o deducibile in contesti playlist/artista
                 val artistCtx = mediaItem.mediaMetadata.extras?.getString(TrackMediaItemMapper.EXTRA_ARTIST_CONTEXT_NAME)
                 val artistCtxId = mediaItem.mediaMetadata.extras?.getString(TrackMediaItemMapper.EXTRA_ARTIST_CONTEXT_ID)
                 if (!artistCtx.isNullOrBlank()) {
                     activeArtistPlaybackName = artistCtx
                     activeArtistPlaybackId = artistCtxId
-                } else if (player.mediaItemCount >= 3) {
+                } else if (isPlaylistCtx && player.mediaItemCount >= 3) {
                     val dominantArtist = currentTrack.artistName
                     val matchCount = (0 until player.mediaItemCount.coerceAtMost(8))
                         .count { player.getMediaItemAt(it).mediaMetadata.artist?.toString()?.equals(dominantArtist, ignoreCase = true) == true }
@@ -329,8 +364,12 @@ class GMusicMediaLibraryService : MediaLibraryService() {
                         activeArtistPlaybackName = dominantArtist
                         activeArtistPlaybackId = currentTrack.artistId
                     }
+                } else {
+                    activeArtistPlaybackName = null
+                    activeArtistPlaybackId = null
                 }
 
+                updateSessionCustomLayout()
                 persistCurrentPlaybackState()
 
                 serviceScope.launch {
@@ -347,7 +386,7 @@ class GMusicMediaLibraryService : MediaLibraryService() {
                 }
 
                 val remainingInQueue = (player.mediaItemCount - 1 - player.currentMediaItemIndex).coerceAtLeast(0)
-                if (remainingInQueue <= 3 && !isFetchingAutoplay) {
+                if (player.repeatMode == Player.REPEAT_MODE_OFF && remainingInQueue <= 3 && !isFetchingAutoplay) {
                     isFetchingAutoplay = true
                     val existingIds = (0 until player.mediaItemCount)
                         .map { player.getMediaItemAt(it).mediaId }
@@ -371,7 +410,8 @@ class GMusicMediaLibraryService : MediaLibraryService() {
                                     TrackMediaItemMapper.toMediaItem(
                                         track = it,
                                         artistContextName = artistCtxName,
-                                        artistContextId = artistCtxId
+                                        artistContextId = artistCtxId,
+                                        isPlaylistContext = isPlaylistCtx
                                     )
                                 }
                                 player.addMediaItems(mediaItems)
@@ -425,7 +465,8 @@ class GMusicMediaLibraryService : MediaLibraryService() {
         currentLikeWatchJob = serviceScope.launch {
             musicRepository.observeTrackById(trackId).collectLatest { dbTrack ->
                 val isLiked = dbTrack?.isLiked ?: false
-                updateLikeCustomButton(isLiked)
+                currentTrackLikedState = isLiked
+                updateSessionCustomLayout(isLikedOverride = isLiked)
                 val currentItem = player.currentMediaItem
                 val track = currentItem?.let { TrackMediaItemMapper.fromMediaItem(it).copy(isLiked = isLiked) }
                 GMusicGlanceWidget.updateAllWidgets(
@@ -447,7 +488,8 @@ class GMusicMediaLibraryService : MediaLibraryService() {
                     musicRepository.observeTrackById(baseTrack.id).first()?.isLiked ?: false
                 }
             } else false
-            updateLikeCustomButton(isLiked)
+            currentTrackLikedState = isLiked
+            updateSessionCustomLayout(isLikedOverride = isLiked)
             GMusicGlanceWidget.updateAllWidgets(
                 context = this@GMusicMediaLibraryService,
                 track = baseTrack?.copy(isLiked = isLiked),
@@ -456,14 +498,62 @@ class GMusicMediaLibraryService : MediaLibraryService() {
         }
     }
 
-    private fun updateLikeCustomButton(isLiked: Boolean) {
+    private fun updateSessionCustomLayout(isLikedOverride: Boolean? = null) {
+        val session = mediaLibrarySession ?: return
+        val isLiked = isLikedOverride ?: currentTrackLikedState
+        val isShuffle = player.shuffleModeEnabled
+        val isPlaylist = TrackMediaItemMapper.isPlaylistContext(player.currentMediaItem)
+        val repeatMode = player.repeatMode
+
         val likeButton = CommandButton.Builder(
             if (isLiked) CommandButton.ICON_HEART_FILLED else CommandButton.ICON_HEART_UNFILLED
         )
             .setDisplayName(getString(if (isLiked) R.string.player_unlike else R.string.player_like))
             .setSessionCommand(SessionCommand(ACTION_TOGGLE_LIKE, Bundle.EMPTY))
             .build()
-        mediaLibrarySession?.setCustomLayout(ImmutableList.of(likeButton))
+
+        val shuffleButton = CommandButton.Builder(
+            if (isShuffle) CommandButton.ICON_SHUFFLE_ON else CommandButton.ICON_SHUFFLE_OFF
+        )
+            .setDisplayName(
+                getString(if (isShuffle) R.string.auto_action_shuffle_on else R.string.auto_action_shuffle_off)
+            )
+            .setSessionCommand(SessionCommand(ACTION_TOGGLE_SHUFFLE, Bundle.EMPTY))
+            .build()
+
+        val repeatIcon: Int
+        val repeatLabelRes: Int
+        if (isPlaylist) {
+            when (repeatMode) {
+                Player.REPEAT_MODE_ALL -> {
+                    repeatIcon = CommandButton.ICON_REPEAT_ALL
+                    repeatLabelRes = R.string.player_repeat_all
+                }
+                Player.REPEAT_MODE_ONE -> {
+                    repeatIcon = CommandButton.ICON_REPEAT_ONE
+                    repeatLabelRes = R.string.player_repeat_one
+                }
+                else -> {
+                    repeatIcon = CommandButton.ICON_REPEAT_OFF
+                    repeatLabelRes = R.string.player_repeat_off
+                }
+            }
+        } else {
+            if (repeatMode == Player.REPEAT_MODE_ONE) {
+                repeatIcon = CommandButton.ICON_REPEAT_ONE
+                repeatLabelRes = R.string.player_repeat_one_on
+            } else {
+                repeatIcon = CommandButton.ICON_REPEAT_OFF
+                repeatLabelRes = R.string.player_repeat_one_off
+            }
+        }
+
+        val repeatButton = CommandButton.Builder(repeatIcon)
+            .setDisplayName(getString(repeatLabelRes))
+            .setSessionCommand(SessionCommand(ACTION_CYCLE_REPEAT, Bundle.EMPTY))
+            .build()
+
+        session.setCustomLayout(ImmutableList.of(likeButton, shuffleButton, repeatButton))
     }
 
     private fun toggleCurrentTrackLikeFromSession() {
@@ -471,13 +561,36 @@ class GMusicMediaLibraryService : MediaLibraryService() {
         val track = TrackMediaItemMapper.fromMediaItem(currentItem)
         serviceScope.launch {
             val newLiked = musicRepository.toggleLike(track)
-            updateLikeCustomButton(newLiked)
+            currentTrackLikedState = newLiked
+            updateSessionCustomLayout(isLikedOverride = newLiked)
             GMusicGlanceWidget.updateAllWidgets(
                 context = this@GMusicMediaLibraryService,
                 track = track.copy(isLiked = newLiked),
                 isPlaying = player.isPlaying
             )
         }
+    }
+
+    private fun toggleShuffleFromSession() {
+        player.shuffleModeEnabled = !player.shuffleModeEnabled
+        updateSessionCustomLayout()
+    }
+
+    private fun cycleRepeatFromSession() {
+        val isPlaylist = TrackMediaItemMapper.isPlaylistContext(player.currentMediaItem)
+        player.repeatMode = if (isPlaylist) {
+            when (player.repeatMode) {
+                Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+                Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+                else -> Player.REPEAT_MODE_OFF
+            }
+        } else {
+            when (player.repeatMode) {
+                Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ONE
+                else -> Player.REPEAT_MODE_OFF
+            }
+        }
+        updateSessionCustomLayout()
     }
 
     private fun skipAfterFailure(failedTitle: String) {
@@ -497,16 +610,25 @@ class GMusicMediaLibraryService : MediaLibraryService() {
      */
     private fun toMediaItemsFast(
         tracks: List<Track>,
-        groupTitle: String? = null
+        groupTitle: String? = null,
+        isPlaylistContext: Boolean = false,
+        isSearchResult: Boolean = false,
+        artistContextName: String? = null,
+        artistContextId: String? = null
     ): List<MediaItem> {
         val capped = tracks.take(MAX_PAGE_SIZE)
         capped.forEach { knownTracks[it.id] = it }
-        if (capped.isNotEmpty()) {
-            lastBrowsedTracks = capped
-        }
         return capped.map { track ->
             val cachedBytes = artworkBytesCache[track.id]
-            TrackMediaItemMapper.toMediaItem(track, cachedBytes, groupTitle)
+            TrackMediaItemMapper.toMediaItem(
+                track = track,
+                artworkBytes = cachedBytes,
+                groupTitle = groupTitle,
+                artistContextName = artistContextName,
+                artistContextId = artistContextId,
+                isPlaylistContext = isPlaylistContext,
+                isSearchResult = isSearchResult
+            )
         }
     }
 
@@ -518,12 +640,17 @@ class GMusicMediaLibraryService : MediaLibraryService() {
         groupTitle: String? = null,
         limit: Int = MAX_PAGE_SIZE,
         artistContextName: String? = null,
-        artistContextId: String? = null
+        artistContextId: String? = null,
+        isPlaylistContext: Boolean = false,
+        updateLastBrowsed: Boolean = true
     ): List<MediaItem> = withContext(Dispatchers.IO) {
         val capped = tracks.take(limit)
         capped.forEach { knownTracks[it.id] = it }
-        if (capped.isNotEmpty()) {
+        if (updateLastBrowsed && capped.isNotEmpty()) {
             lastBrowsedTracks = capped
+            lastBrowsedIsPlaylistContext = isPlaylistContext
+            lastBrowsedArtistName = artistContextName
+            lastBrowsedArtistId = artistContextId
         }
         coroutineScope {
             capped.map { track ->
@@ -534,7 +661,8 @@ class GMusicMediaLibraryService : MediaLibraryService() {
                         artworkBytes = bytes,
                         groupTitle = groupTitle,
                         artistContextName = artistContextName,
-                        artistContextId = artistContextId
+                        artistContextId = artistContextId,
+                        isPlaylistContext = isPlaylistContext
                     )
                 }
             }.awaitAll()
@@ -550,8 +678,13 @@ class GMusicMediaLibraryService : MediaLibraryService() {
         tracks: List<Track>
     ): List<MediaItem> {
         if (tracks.isEmpty()) return emptyList()
+        lastSearchTrackIds = emptySet()
+        val isPlaylistContainer = !containerKey.startsWith(PREFIX_MOOD)
+        val isArtist = containerKey.startsWith(PREFIX_ARTIST)
+        val artId = if (isArtist) containerKey.removePrefix(PREFIX_ARTIST) else null
+        val artName = artId?.let { artistNameHints[it] ?: it }
         containerTracksCache[containerKey] = tracks
-        lastBrowsedTracks = tracks
+        containerIsPlaylistMap[containerKey] = isPlaylistContainer
         tracks.forEach { knownTracks[it.id] = it }
 
         val shuffleItem = actionPlayableItem(
@@ -560,11 +693,20 @@ class GMusicMediaLibraryService : MediaLibraryService() {
             subtitle = null,
             iconRes = R.drawable.ic_aa_shuffle
         )
-        val trackItems = toMediaItemsWithArtwork(tracks)
+        val trackItems = toMediaItemsWithArtwork(
+            tracks = tracks,
+            artistContextName = artName,
+            artistContextId = artId,
+            isPlaylistContext = isPlaylistContainer
+        )
         return listOf(shuffleItem) + trackItems
     }
 
     private suspend fun resolveFullMediaItem(item: MediaItem): MediaItem {
+        val isPlaylist = TrackMediaItemMapper.isPlaylistContext(item)
+        val isSearch = TrackMediaItemMapper.isSearchResult(item)
+        val artistCtxName = item.mediaMetadata.extras?.getString(TrackMediaItemMapper.EXTRA_ARTIST_CONTEXT_NAME)
+        val artistCtxId = item.mediaMetadata.extras?.getString(TrackMediaItemMapper.EXTRA_ARTIST_CONTEXT_ID)
         val metaTitle = item.mediaMetadata.title?.toString()
         val metaArtist = item.mediaMetadata.artist?.toString()
         val hasValidMetadata = !metaTitle.isNullOrBlank() &&
@@ -587,7 +729,14 @@ class GMusicMediaLibraryService : MediaLibraryService() {
         }
         val artworkBytes = artworkBytesCache[track.id]
             ?: withContext(Dispatchers.IO) { fetchOrGetCachedArtwork(track.id, track.thumbnailUrl) }
-        return TrackMediaItemMapper.toMediaItem(track, artworkBytes)
+        return TrackMediaItemMapper.toMediaItem(
+            track = track,
+            artworkBytes = artworkBytes,
+            artistContextName = artistCtxName,
+            artistContextId = artistCtxId,
+            isPlaylistContext = isPlaylist,
+            isSearchResult = isSearch
+        )
     }
 
     private fun fetchOrGetCachedArtwork(
@@ -670,21 +819,77 @@ class GMusicMediaLibraryService : MediaLibraryService() {
         return super.onStartCommand(intent, flags, startId)
     }
 
+    private suspend fun buildRelatedQueueMediaItems(
+        track: Track,
+        withArtwork: Boolean
+    ): List<MediaItem> {
+        val relatedQueue = withContext(Dispatchers.IO) {
+            musicRepository.fetchRelatedQueueForTrack(track)
+        }.ifEmpty { listOf(track) }
+        return if (withArtwork) {
+            toMediaItemsWithArtwork(
+                tracks = relatedQueue,
+                isPlaylistContext = false,
+                updateLastBrowsed = false
+            )
+        } else {
+            toMediaItemsFast(
+                tracks = relatedQueue,
+                isPlaylistContext = false
+            )
+        }
+    }
+
+    private fun ensureValidRepeatModeForContext(isPlaylistContext: Boolean) {
+        if (!isPlaylistContext && player.repeatMode == Player.REPEAT_MODE_ALL) {
+            player.repeatMode = Player.REPEAT_MODE_OFF
+        }
+    }
+
     private fun handleVoicePlayQuery(query: String) {
         serviceScope.launch {
             Log.i(TAG, "Avvio riproduzione vocale da Intent per query: $query")
-            val tracks = withContext(Dispatchers.IO) {
-                val songs = musicRepository.searchSongs(query)
-                if (songs.isNotEmpty()) songs else {
-                    val full = musicRepository.searchAllCategories(query)
-                    if (full.artists.isNotEmpty()) {
-                        val art = full.artists.first()
-                        musicRepository.fetchArtistDetail(art.id, art.name).popularTracks.ifEmpty { full.songs }
-                    } else full.songs
+            val directSongs = withContext(Dispatchers.IO) {
+                musicRepository.searchSongs(query)
+            }
+            if (directSongs.isNotEmpty()) {
+                activeArtistPlaybackName = null
+                activeArtistPlaybackId = null
+                ensureValidRepeatModeForContext(isPlaylistContext = false)
+                val queue = buildRelatedQueueMediaItems(directSongs.first(), withArtwork = false)
+                player.setMediaItems(queue, 0, 0L)
+                player.prepare()
+                player.play()
+                return@launch
+            }
+            val full = withContext(Dispatchers.IO) {
+                musicRepository.searchAllCategories(query)
+            }
+            if (full.artists.isNotEmpty()) {
+                val art = full.artists.first()
+                val artistTracks = withContext(Dispatchers.IO) {
+                    musicRepository.fetchArtistDetail(art.id, art.name).popularTracks
+                }
+                if (artistTracks.isNotEmpty()) {
+                    activeArtistPlaybackName = art.name
+                    activeArtistPlaybackId = art.id
+                    val queue = toMediaItemsFast(
+                        tracks = artistTracks,
+                        isPlaylistContext = true,
+                        artistContextName = art.name,
+                        artistContextId = art.id
+                    )
+                    player.setMediaItems(queue, 0, 0L)
+                    player.prepare()
+                    player.play()
+                    return@launch
                 }
             }
-            if (tracks.isNotEmpty()) {
-                val queue = toMediaItemsFast(tracks)
+            if (full.songs.isNotEmpty()) {
+                activeArtistPlaybackName = null
+                activeArtistPlaybackId = null
+                ensureValidRepeatModeForContext(isPlaylistContext = false)
+                val queue = buildRelatedQueueMediaItems(full.songs.first(), withArtwork = false)
                 player.setMediaItems(queue, 0, 0L)
                 player.prepare()
                 player.play()
@@ -730,11 +935,18 @@ class GMusicMediaLibraryService : MediaLibraryService() {
             val sessionCommands = defaultResult.availableSessionCommands
                 .buildUpon()
                 .add(SessionCommand(ACTION_TOGGLE_LIKE, Bundle.EMPTY))
+                .add(SessionCommand(ACTION_TOGGLE_SHUFFLE, Bundle.EMPTY))
+                .add(SessionCommand(ACTION_CYCLE_REPEAT, Bundle.EMPTY))
                 .build()
             return MediaSession.ConnectionResult.accept(
                 sessionCommands,
                 defaultResult.availablePlayerCommands
             )
+        }
+
+        override fun onPostConnect(session: MediaSession, controller: MediaSession.ControllerInfo) {
+            super.onPostConnect(session, controller)
+            updateSessionCustomLayout()
         }
 
         override fun onCustomCommand(
@@ -743,9 +955,19 @@ class GMusicMediaLibraryService : MediaLibraryService() {
             customCommand: SessionCommand,
             args: Bundle
         ): ListenableFuture<SessionResult> {
-            if (customCommand.customAction == ACTION_TOGGLE_LIKE) {
-                toggleCurrentTrackLikeFromSession()
-                return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+            when (customCommand.customAction) {
+                ACTION_TOGGLE_LIKE -> {
+                    toggleCurrentTrackLikeFromSession()
+                    return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+                }
+                ACTION_TOGGLE_SHUFFLE -> {
+                    toggleShuffleFromSession()
+                    return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+                }
+                ACTION_CYCLE_REPEAT -> {
+                    cycleRepeatFromSession()
+                    return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+                }
             }
             return super.onCustomCommand(session, controller, customCommand, args)
         }
@@ -1087,12 +1309,51 @@ class GMusicMediaLibraryService : MediaLibraryService() {
                 params?.extras?.getBoolean("android.intent.extra.play", false) == true
 
             if (isVoicePlay && groupedItems.isNotEmpty()) {
-                val playableSongs = groupedItems.filter { it.mediaMetadata.isPlayable == true }
-                if (playableSongs.isNotEmpty()) {
+                val firstMusicItem = groupedItems.firstOrNull {
+                    it.mediaMetadata.isPlayable == true &&
+                        it.mediaMetadata.mediaType == MediaMetadata.MEDIA_TYPE_MUSIC
+                }
+                if (firstMusicItem != null) {
+                    val seedTrack = knownTracks[firstMusicItem.mediaId]
+                        ?: TrackMediaItemMapper.fromMediaItem(firstMusicItem)
+                    val relatedQueue = buildRelatedQueueMediaItems(seedTrack, withArtwork = true)
                     withContext(Dispatchers.Main) {
-                        player.setMediaItems(playableSongs, 0, 0L)
+                        activeArtistPlaybackName = null
+                        activeArtistPlaybackId = null
+                        ensureValidRepeatModeForContext(isPlaylistContext = false)
+                        player.setMediaItems(relatedQueue, 0, 0L)
                         player.prepare()
                         player.play()
+                    }
+                } else {
+                    val firstArtistItem = groupedItems.firstOrNull {
+                        it.mediaMetadata.isPlayable == true && it.mediaId.startsWith(PREFIX_ARTIST)
+                    }
+                    if (firstArtistItem != null) {
+                        val artId = firstArtistItem.mediaId.removePrefix(PREFIX_ARTIST)
+                        val nameHint = artistNameHints[artId] ?: firstArtistItem.mediaMetadata.title?.toString() ?: artId
+                        val discography = withContext(Dispatchers.IO) {
+                            musicRepository.fetchArtistDiscography(artId, nameHint).ifEmpty {
+                                musicRepository.fetchArtistDetail(artId, nameHint).popularTracks
+                            }
+                        }
+                        if (discography.isNotEmpty()) {
+                            val artistQueue = toMediaItemsWithArtwork(
+                                tracks = discography,
+                                limit = 100,
+                                artistContextName = nameHint,
+                                artistContextId = artId,
+                                isPlaylistContext = true,
+                                updateLastBrowsed = false
+                            )
+                            withContext(Dispatchers.Main) {
+                                activeArtistPlaybackName = nameHint
+                                activeArtistPlaybackId = artId
+                                player.setMediaItems(artistQueue, 0, 0L)
+                                player.prepare()
+                                player.play()
+                            }
+                        }
                     }
                 }
             }
@@ -1232,29 +1493,55 @@ class GMusicMediaLibraryService : MediaLibraryService() {
 
             if (voiceQuery != null) {
                 Log.i(TAG, "Ricevuta richiesta di riproduzione vocale su onSetMediaItems: '$voiceQuery'")
-                val searchResults = withContext(Dispatchers.IO) {
-                    val directSongs = musicRepository.searchSongs(voiceQuery)
-                    if (directSongs.isNotEmpty()) {
-                        directSongs
-                    } else {
-                        val full = musicRepository.searchAllCategories(voiceQuery)
-                        if (full.artists.isNotEmpty()) {
-                            val art = full.artists.first()
-                            val detail = musicRepository.fetchArtistDetail(art.id, art.name)
-                            detail.popularTracks.ifEmpty { full.songs }
-                        } else {
-                            full.songs
-                        }
+                val directSongs = withContext(Dispatchers.IO) {
+                    musicRepository.searchSongs(voiceQuery)
+                }
+                if (directSongs.isNotEmpty()) {
+                    activeArtistPlaybackName = null
+                    activeArtistPlaybackId = null
+                    ensureValidRepeatModeForContext(isPlaylistContext = false)
+                    val fullQueue = buildRelatedQueueMediaItems(
+                        track = directSongs.first(),
+                        withArtwork = controller.packageName != packageName
+                    )
+                    return@future MediaSession.MediaItemsWithStartPosition(fullQueue, 0, 0L)
+                }
+                val full = withContext(Dispatchers.IO) {
+                    musicRepository.searchAllCategories(voiceQuery)
+                }
+                if (full.artists.isNotEmpty()) {
+                    val art = full.artists.first()
+                    val artistTracks = withContext(Dispatchers.IO) {
+                        musicRepository.fetchArtistDetail(art.id, art.name).popularTracks
+                    }
+                    if (artistTracks.isNotEmpty()) {
+                        activeArtistPlaybackName = art.name
+                        activeArtistPlaybackId = art.id
+                        val fullQueue = toMediaItemsFast(
+                            tracks = artistTracks,
+                            isPlaylistContext = true,
+                            artistContextName = art.name,
+                            artistContextId = art.id
+                        )
+                        return@future MediaSession.MediaItemsWithStartPosition(fullQueue, 0, 0L)
                     }
                 }
-                if (searchResults.isNotEmpty()) {
-                    val fullQueue = toMediaItemsFast(searchResults)
+                if (full.songs.isNotEmpty()) {
+                    activeArtistPlaybackName = null
+                    activeArtistPlaybackId = null
+                    ensureValidRepeatModeForContext(isPlaylistContext = false)
+                    val fullQueue = buildRelatedQueueMediaItems(
+                        track = full.songs.first(),
+                        withArtwork = controller.packageName != packageName
+                    )
                     return@future MediaSession.MediaItemsWithStartPosition(fullQueue, 0, 0L)
                 }
             }
 
             if (mediaItems.size == 1) {
-                val clickedId = mediaItems[0].mediaId
+                val clickedItem = mediaItems[0]
+                val clickedId = clickedItem.mediaId
+                val isExternalController = controller.packageName != packageName
 
                 // Gestione avvio diretto Discografia Artista in modalità casuale da Android Auto
                 if (clickedId.startsWith(PREFIX_ARTIST)) {
@@ -1275,7 +1562,9 @@ class GMusicMediaLibraryService : MediaLibraryService() {
                             tracks = shuffled,
                             limit = 100,
                             artistContextName = nameHint,
-                            artistContextId = artId
+                            artistContextId = artId,
+                            isPlaylistContext = true,
+                            updateLastBrowsed = false
                         )
                         return@future MediaSession.MediaItemsWithStartPosition(fullQueue, 0, 0L)
                     }
@@ -1287,18 +1576,25 @@ class GMusicMediaLibraryService : MediaLibraryService() {
                     val isArtist = containerKey.startsWith(PREFIX_ARTIST)
                     val artId = if (isArtist) containerKey.removePrefix(PREFIX_ARTIST) else null
                     val nameHint = artId?.let { artistNameHints[it] ?: it }
+                    val isPlaylist = containerIsPlaylistMap[containerKey] ?: !containerKey.startsWith(PREFIX_MOOD)
                     val tracks = containerTracksCache[containerKey] ?: lastBrowsedTracks
                     if (tracks.isNotEmpty()) {
                         if (isArtist && nameHint != null) {
                             activeArtistPlaybackName = nameHint
                             activeArtistPlaybackId = artId
+                        } else {
+                            activeArtistPlaybackName = null
+                            activeArtistPlaybackId = null
                         }
+                        ensureValidRepeatModeForContext(isPlaylist)
                         player.shuffleModeEnabled = false
                         val fullQueue = toMediaItemsWithArtwork(
                             tracks = tracks,
                             limit = 100,
                             artistContextName = nameHint,
-                            artistContextId = artId
+                            artistContextId = artId,
+                            isPlaylistContext = isPlaylist,
+                            updateLastBrowsed = false
                         )
                         return@future MediaSession.MediaItemsWithStartPosition(fullQueue, 0, 0L)
                     }
@@ -1308,37 +1604,87 @@ class GMusicMediaLibraryService : MediaLibraryService() {
                     val isArtist = containerKey.startsWith(PREFIX_ARTIST)
                     val artId = if (isArtist) containerKey.removePrefix(PREFIX_ARTIST) else null
                     val nameHint = artId?.let { artistNameHints[it] ?: it }
+                    val isPlaylist = containerIsPlaylistMap[containerKey] ?: !containerKey.startsWith(PREFIX_MOOD)
                     val tracks = (containerTracksCache[containerKey] ?: lastBrowsedTracks).shuffled()
                     if (tracks.isNotEmpty()) {
                         if (isArtist && nameHint != null) {
                             activeArtistPlaybackName = nameHint
                             activeArtistPlaybackId = artId
+                        } else {
+                            activeArtistPlaybackName = null
+                            activeArtistPlaybackId = null
                         }
+                        ensureValidRepeatModeForContext(isPlaylist)
                         player.shuffleModeEnabled = true
                         val fullQueue = toMediaItemsWithArtwork(
                             tracks = tracks,
                             limit = 100,
                             artistContextName = nameHint,
-                            artistContextId = artId
+                            artistContextId = artId,
+                            isPlaylistContext = isPlaylist,
+                            updateLastBrowsed = false
                         )
                         return@future MediaSession.MediaItemsWithStartPosition(fullQueue, 0, 0L)
                     }
                 }
 
-                val contextTracks = lastBrowsedTracks
-                val contextIndex = contextTracks.indexOfFirst { it.id == clickedId }
-                if (contextIndex >= 0 && contextTracks.size > 1) {
-                    val fullQueue = toMediaItemsWithArtwork(contextTracks)
-                    val safePos = if (startPositionMs == C.TIME_UNSET) 0L else startPositionMs.coerceAtLeast(0L)
-                    return@future MediaSession.MediaItemsWithStartPosition(fullQueue, contextIndex, safePos)
+                // Riproduzione da Ricerca (Mobile o Android Auto): crea coda dai brani correlati invece che dai risultati di ricerca
+                val isFromSearch = TrackMediaItemMapper.isSearchResult(clickedItem) ||
+                    (clickedItem.localConfiguration == null && clickedId in lastSearchTrackIds)
+                if (isFromSearch) {
+                    activeArtistPlaybackName = null
+                    activeArtistPlaybackId = null
+                    ensureValidRepeatModeForContext(isPlaylistContext = false)
+                    val seedTrack = if (clickedItem.localConfiguration != null && !clickedItem.mediaMetadata.title.isNullOrBlank()) {
+                        TrackMediaItemMapper.fromMediaItem(clickedItem).also { knownTracks[it.id] = it }
+                    } else {
+                        knownTracks[clickedId]
+                            ?: withContext(Dispatchers.IO) { musicRepository.resolveTrackById(clickedId) }
+                            ?: TrackMediaItemMapper.fromMediaItem(clickedItem)
+                    }
+                    val relatedQueue = buildRelatedQueueMediaItems(
+                        track = seedTrack,
+                        withArtwork = isExternalController
+                    )
+                    return@future MediaSession.MediaItemsWithStartPosition(relatedQueue, 0, 0L)
+                }
+
+                // Riproduzione di un elemento sfogliato su Android Auto (es. brano in Playlist, Album, Tendenze, Home)
+                if (isExternalController || clickedItem.localConfiguration == null) {
+                    val contextTracks = lastBrowsedTracks
+                    val contextIndex = contextTracks.indexOfFirst { it.id == clickedId }
+                    if (contextIndex >= 0 && contextTracks.size > 1) {
+                        val isPlaylist = lastBrowsedIsPlaylistContext
+                        val artName = lastBrowsedArtistName
+                        val artId = lastBrowsedArtistId
+                        if (!artName.isNullOrBlank()) {
+                            activeArtistPlaybackName = artName
+                            activeArtistPlaybackId = artId
+                        } else {
+                            activeArtistPlaybackName = null
+                            activeArtistPlaybackId = null
+                        }
+                        ensureValidRepeatModeForContext(isPlaylist)
+                        val fullQueue = toMediaItemsWithArtwork(
+                            tracks = contextTracks,
+                            artistContextName = artName,
+                            artistContextId = artId,
+                            isPlaylistContext = isPlaylist,
+                            updateLastBrowsed = false
+                        )
+                        val safePos = if (startPositionMs == C.TIME_UNSET) 0L else startPositionMs.coerceAtLeast(0L)
+                        return@future MediaSession.MediaItemsWithStartPosition(fullQueue, contextIndex, safePos)
+                    }
                 }
             }
+            val firstIsPlaylist = TrackMediaItemMapper.isPlaylistContext(firstItem)
+            ensureValidRepeatModeForContext(firstIsPlaylist)
             val firstArtistContext = mediaItems.firstOrNull()?.mediaMetadata?.extras?.getString(TrackMediaItemMapper.EXTRA_ARTIST_CONTEXT_NAME)
             val firstArtistIdContext = mediaItems.firstOrNull()?.mediaMetadata?.extras?.getString(TrackMediaItemMapper.EXTRA_ARTIST_CONTEXT_ID)
             if (!firstArtistContext.isNullOrBlank()) {
                 activeArtistPlaybackName = firstArtistContext
                 activeArtistPlaybackId = firstArtistIdContext
-            } else if (mediaItems.size >= 3) {
+            } else if (firstIsPlaylist && mediaItems.size >= 3) {
                 val firstArtist = mediaItems.firstOrNull()?.mediaMetadata?.artist?.toString()
                 if (!firstArtist.isNullOrBlank()) {
                     val matchCount = mediaItems.take(8).count {
@@ -1384,7 +1730,10 @@ class GMusicMediaLibraryService : MediaLibraryService() {
                     musicRepository.searchSongs(voiceQuery)
                 }
                 if (searchResults.isNotEmpty()) {
-                    return@future toMediaItemsFast(searchResults).toMutableList()
+                    return@future buildRelatedQueueMediaItems(
+                        track = searchResults.first(),
+                        withArtwork = controller.packageName != packageName
+                    ).toMutableList()
                 }
             }
 
@@ -1403,6 +1752,7 @@ class GMusicMediaLibraryService : MediaLibraryService() {
      * "I tuoi artisti preferiti", "Nuove uscite per te", e scaffali tematici).
      */
     private suspend fun buildAndroidAutoHomeTabItems(): List<MediaItem> = withContext(Dispatchers.IO) {
+        lastSearchTrackIds = emptySet()
         val result = mutableListOf<MediaItem>()
         var recentTracks = musicRepository.observeRecentHistory(10).first()
         if (recentTracks.isEmpty() && musicRepository.isLoggedIn.value) {
@@ -1589,6 +1939,7 @@ class GMusicMediaLibraryService : MediaLibraryService() {
 
 
     private suspend fun buildAndroidAutoSearchTabItems(): List<MediaItem> = withContext(Dispatchers.IO) {
+        lastSearchTrackIds = emptySet()
         val (charts, _, moods) = musicRepository.loadExploreItalyData()
         val items = mutableListOf<MediaItem>()
 
@@ -1624,8 +1975,19 @@ class GMusicMediaLibraryService : MediaLibraryService() {
         val results = mutableListOf<MediaItem>()
 
         if (full.songs.isNotEmpty()) {
+            val topSongs = full.songs.take(15)
+            lastSearchTrackIds = topSongs.map { it.id }.toSet()
             val songsHeader = getString(R.string.filter_songs)
-            results.addAll(toMediaItemsFast(full.songs.take(15), groupTitle = songsHeader))
+            results.addAll(
+                toMediaItemsFast(
+                    tracks = topSongs,
+                    groupTitle = songsHeader,
+                    isPlaylistContext = false,
+                    isSearchResult = true
+                )
+            )
+        } else {
+            lastSearchTrackIds = emptySet()
         }
         if (full.artists.isNotEmpty()) {
             val artistsHeader = getString(R.string.filter_artists)
@@ -1887,6 +2249,8 @@ class GMusicMediaLibraryService : MediaLibraryService() {
         private const val TAG = "GMusicAudio"
         private const val MAX_PAGE_SIZE = 50
         const val ACTION_TOGGLE_LIKE = "com.gmusic.app.ACTION_TOGGLE_LIKE"
+        const val ACTION_TOGGLE_SHUFFLE = "com.gmusic.app.ACTION_TOGGLE_SHUFFLE"
+        const val ACTION_CYCLE_REPEAT = "com.gmusic.app.ACTION_CYCLE_REPEAT"
         const val NODE_ROOT = "root"
         const val NODE_TAB_HOME = "tab_home"
         const val NODE_TAB_SEARCH = "tab_search"

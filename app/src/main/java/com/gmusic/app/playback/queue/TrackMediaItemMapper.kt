@@ -17,6 +17,8 @@ object TrackMediaItemMapper {
     const val CONTENT_STYLE_GRID_ITEM_HINT_VALUE = 2
     const val EXTRA_ARTIST_CONTEXT_NAME = "artist_context_name"
     const val EXTRA_ARTIST_CONTEXT_ID = "artist_context_id"
+    const val EXTRA_IS_PLAYLIST_CONTEXT = "is_playlist_context"
+    const val EXTRA_IS_SEARCH_RESULT = "is_search_result"
 
     private const val EXTRA_ARTIST_ID = "artist_id"
     private const val EXTRA_ALBUM_ID = "album_id"
@@ -28,7 +30,9 @@ object TrackMediaItemMapper {
         artworkBytes: ByteArray? = null,
         groupTitle: String? = null,
         artistContextName: String? = null,
-        artistContextId: String? = null
+        artistContextId: String? = null,
+        isPlaylistContext: Boolean = false,
+        isSearchResult: Boolean = false
     ): MediaItem {
         val extras = Bundle().apply {
             track.artistId?.let { putString(EXTRA_ARTIST_ID, it) }
@@ -36,6 +40,10 @@ object TrackMediaItemMapper {
             putLong(EXTRA_DURATION_SEC, track.durationSeconds)
             putString(EXTRA_THUMBNAIL_URL, track.thumbnailUrl)
             putInt(CONTENT_STYLE_PLAYABLE_HINT, CONTENT_STYLE_LIST_ITEM_HINT_VALUE)
+            putBoolean(EXTRA_IS_PLAYLIST_CONTEXT, isPlaylistContext)
+            if (isSearchResult) {
+                putBoolean(EXTRA_IS_SEARCH_RESULT, true)
+            }
             if (!groupTitle.isNullOrBlank()) {
                 putString(CONTENT_STYLE_GROUP_TITLE_HINT, groupTitle)
             }
@@ -90,4 +98,10 @@ object TrackMediaItemMapper {
             durationSeconds = extras?.getLong(EXTRA_DURATION_SEC) ?: 0L
         )
     }
+
+    fun isPlaylistContext(item: MediaItem?): Boolean =
+        item?.mediaMetadata?.extras?.getBoolean(EXTRA_IS_PLAYLIST_CONTEXT, false) == true
+
+    fun isSearchResult(item: MediaItem?): Boolean =
+        item?.mediaMetadata?.extras?.getBoolean(EXTRA_IS_SEARCH_RESULT, false) == true
 }
